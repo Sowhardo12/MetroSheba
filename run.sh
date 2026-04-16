@@ -1,6 +1,5 @@
 #!/bin/bash
 
-echo "🚀 Initializing MetroSheba Project (Latest Tech Stack)..."
 mkdir -p apps/backend apps/frontend docker/db_init
 echo "Setting up Backend (Express + PG)..."
 cd apps/backend
