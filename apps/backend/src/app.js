@@ -7,6 +7,7 @@ const aiRoutes = require('./routes/aiRoutes');
 const authRoutes = require('./routes/authRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const lostFoundRoutes = require('./routes/lostFoundRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 const app = express();
 
 // PostgreSQL Connection
@@ -29,6 +30,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/lost-found', lostFoundRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Basic Test Route
 app.get('/api/health', async (req, res) => {

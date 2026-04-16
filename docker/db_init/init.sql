@@ -62,6 +62,20 @@ CREATE TABLE IF NOT EXISTS tickets (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '1 hour')
 );
+--mock bank data 
+CREATE TABLE IF NOT EXISTS bank_accounts (
+    id SERIAL PRIMARY KEY,
+    account_number VARCHAR(20) UNIQUE NOT NULL,
+    pin VARCHAR(4) NOT NULL,
+    balance DECIMAL(15, 2) DEFAULT 5000.00 -- Everyone starts with 5k in their bank!
+);
+
+-- Seed a test account (Account: 123456, PIN: 1234)
+INSERT INTO bank_accounts (account_number, pin, balance) 
+VALUES ('123456', '1234', 5000.00) 
+ON CONFLICT DO NOTHING;
+
+
 --adding real data
 INSERT INTO stations (name, lat, lng, accessibility_info) VALUES
 ('Uttara North', 23.8759, 90.3755, 'Elevator: Working'),

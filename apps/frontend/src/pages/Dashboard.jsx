@@ -57,28 +57,46 @@ const Dashboard = () => {
 
       <div className="max-w-5xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         
+     
         {/* Left: User Stats */}
-        <div className="md:col-span-1 space-y-6">
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-            <h2 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">My Account</h2>
-            <p className="text-2xl font-black text-slate-800">
-              {loading ? <span className="text-slate-200">Loading...</span> : user?.name}
-            </p>
-            <div className="mt-4 p-4 bg-green-50 rounded-2xl flex items-center justify-between">
-              <Wallet className="text-green-600" />
-              <span className="text-xl font-bold text-green-700">
-                ৳{loading ? '--' : (user?.balance || '0.00')}
-              </span>
-            </div>
-          </div>
-
-          <button 
-            onClick={() => navigate('/map')}
-            className="w-full flex items-center justify-center gap-3 bg-slate-900 text-white p-5 rounded-2xl font-bold hover:bg-black active:scale-[0.98] transition-all"
-          >
-            <MapIcon size={20} /> View Metro Map
-          </button>
+<div className="md:col-span-1 space-y-6">
+  <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+    <h2 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">My Account</h2>
+    <p className="text-2xl font-black text-slate-800">
+      {loading ? <span className="text-slate-200 animate-pulse">Loading...</span> : user?.name}
+    </p>
+    
+    {/* Wallet Card */}
+    <div className="mt-4 p-4 bg-green-50 rounded-2xl flex items-center justify-between border border-green-100">
+      <div className="flex items-center gap-3">
+        <div className="bg-green-600 p-2 rounded-xl text-white shadow-sm">
+          <Wallet size={18} />
         </div>
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold text-green-600 uppercase tracking-tighter">Balance</span>
+          <span className="text-xl font-black text-green-700 leading-tight">
+            ৳{loading ? '--' : (user?.balance || '0.00')}
+          </span>
+        </div>
+      </div>
+
+      {/* Top Up Button */}
+      <button 
+        onClick={() => navigate('/topup')}
+        className="bg-white text-green-600 px-2 py-2 rounded-xl text-xs font-black uppercase shadow-sm border border-green-100 hover:bg-green-600 hover:text-white transition-all active:scale-95 flex items-center gap-1"
+      >
+        <span>+</span> Top Up
+      </button>
+    </div>
+  </div>
+
+  <button 
+    onClick={() => navigate('/map')}
+    className="w-full flex items-center justify-center gap-3 bg-slate-900 text-white p-5 rounded-2xl font-bold hover:bg-black active:scale-[0.98] transition-all shadow-lg shadow-slate-200"
+  >
+    <MapIcon size={20} /> View Metro Map
+  </button>
+</div>
 
         {/* Center/Right: Actions & History */}
         <div className="md:col-span-2 space-y-6">

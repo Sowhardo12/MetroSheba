@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchStations } from './api/metroApi';
 import BuyTicket from './pages/BuyTicket';
 import LostFound from './pages/LostFound';
+import TopUp from './pages/TopUp';
 
 function App() {
   const [stations, setStations] = useState([]);
@@ -30,6 +31,7 @@ function App() {
           <Dashboard />
         </ProtectedRoute>
       }/>
+      <Route path="/topup" element={<ProtectedRoute><TopUp /></ProtectedRoute>} />
       <Route path="/buy-ticket" element={<ProtectedRoute><BuyTicket /></ProtectedRoute>} />
       <Route path="/lost-found" element={<ProtectedRoute><LostFound /></ProtectedRoute>} />
       <Route path="/map" element={
