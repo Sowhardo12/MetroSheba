@@ -1,0 +1,5 @@
+http://localhost:5000/api/stations/fare?startId=1&endId=6
+
+to test ; keep script under tests/ and name as something.test.js
+inside backend: run-> npm test
+
