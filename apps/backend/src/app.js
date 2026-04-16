@@ -1,4 +1,5 @@
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const cors = require('cors'); // 1. Import CORS
 const { Pool } = require('pg');
 require('dotenv').config();
@@ -15,14 +16,18 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+
+
+app.use(cookieParser());
+app.use(express.json());
+
+
 app.use(cors({
   origin: 'http://localhost:5173', // Vite dev server access 
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  // allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
-
-
-app.use(express.json());
 
 
 app.use('/api/stations', stationRoutes);

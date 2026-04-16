@@ -8,11 +8,13 @@ const authenticateToken = (req, res, next) => {
   if (!token) return res.status(401).json({ error: "Access denied. Please login." });
 
   try {
-    const verified = jwt.verify(token, 'METRO_SECRET'); // Must match your login secret
+    const verified = jwt.verify(token, process.env.JWT_SECRET); // Must match your login secret
     req.user = verified; // This adds the user ID to the 'req' object
     next(); // Move to the controller
   } catch (err) {
-    res.status(403).json({ error: "Invalid or expired token." });
+    console.log("Token verification failed, sending 401...");
+    // res.status(403).json({ error: "Invalid or expired token." });
+    res.status(401).json({ error: "Invalid or expired token." });
   }
 };
 

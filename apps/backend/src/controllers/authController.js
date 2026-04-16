@@ -3,6 +3,24 @@ const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
+
+const generateTokens = (user) => {
+  const accessToken = jwt.sign(
+    { id: user.id, email: user.email }, 
+    process.env.JWT_SECRET, 
+    { expiresIn: '15m' } // Shorter life
+  );
+  
+  const refreshToken = jwt.sign(
+    { id: user.id }, 
+    process.env.REFRESH_SECRET || 'super_secret_refresh', 
+    { expiresIn: '7d' } // Longer life
+  );
+  
+  return { accessToken, refreshToken };
+};
+
+
 const register = async (req, res) => {
     const { name, email, password } = req.body;
     const hashed = await bcrypt.hash(password, 10);
@@ -21,8 +39,17 @@ const login = async (req, res) => {
     const user = result.rows[0];
 
     if (user && await bcrypt.compare(password, user.password_hash)) {
-        const token = jwt.sign({ id: user.id }, 'METRO_SECRET', { expiresIn: '1h' });
-        res.json({ token, user: { name: user.name, email: user.email, balance: user.balance } });
+        // const token = jwt.sign({ id: user.id }, 'METRO_SECRET', { expiresIn: '1h' });  old way
+        //access and refresh token system  calling function
+        const { accessToken, refreshToken } = generateTokens(user);
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true, //prevents client js from access cookie by document.cookie ; prevent XSS attacks
+            secure: false, // Only over HTTPS in production works
+            sameSite: 'Lax',  //prevent CSRF
+             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+           });
+
+        res.json({ accessToken, user: { name: user.name, email: user.email, balance: user.balance } });
     } else {
         res.status(401).json({ error: "Invalid credentials" });
     }
@@ -41,4 +68,33 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe };
+const refreshToken = async (req, res) => {
+  // 1. Get the refresh token from the cookie
+  const refreshToken = req.cookies.refreshToken;
+  console.log(req.cookies)
+  if (!refreshToken) {
+    return res.status(401).json({ error: "Access Denied. No refresh token provided." });
+  }
+
+  try {
+    // 2. Verify the refresh token
+    // Note: Use a separate REFRESH_SECRET in your .env for better security
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET || 'super_secret_refresh');
+
+    // 3. Generate a NEW Access Token (Short-lived)
+    const accessToken = jwt.sign(
+      { id: decoded.id }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '15m' }
+    );
+
+    // 4. Send it back to the frontend
+    res.json({ accessToken });
+  } catch (err) {
+    // If refresh token is expired or tampered with
+    res.status(403).json({ error: "Invalid or expired refresh token. Please login again." });
+  }
+};
+
+
+module.exports = { register, login, getMe, refreshToken };

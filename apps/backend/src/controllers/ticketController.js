@@ -8,7 +8,17 @@ const buyTicket = async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN'); // Start Transaction
-
+    //check for recent buy in last 2 mins
+    const recentTicket = await client.query(
+      `SELECT id, created_at FROM tickets 
+       WHERE user_id = $1 
+       AND created_at > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' - INTERVAL '2 minutes')
+       ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
+    if (recentTicket.rows.length > 0) {
+      throw new Error("You already have an active ticket. Please wait 2 minutes.");
+    }
     // 1. Check Balance
     const userRes = await client.query('SELECT balance FROM users WHERE id = $1 FOR UPDATE', [userId]);
     if (userRes.rows[0].balance < fare) throw new Error("Insufficient balance");
