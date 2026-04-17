@@ -1,77 +1,99 @@
+Project Structure:
 .
-./.gitignore
-./apps
-./apps/backend
-./apps/backend/.env
-./apps/backend/package-lock.json
-./apps/backend/package.json
-./apps/backend/src
-./apps/backend/src/app.js
-./apps/backend/src/config
-./apps/backend/src/controllers
-./apps/backend/src/controllers/aiController.js
-./apps/backend/src/controllers/authController.js
-./apps/backend/src/controllers/paymentController.js
-./apps/backend/src/controllers/stationController.js
-./apps/backend/src/controllers/ticketController.js
-./apps/backend/src/data
-./apps/backend/src/data/fare.js
-./apps/backend/src/index.js
-./apps/backend/src/middleware
-./apps/backend/src/middleware/authMiddleware.js
-./apps/backend/src/models
-./apps/backend/src/routes
-./apps/backend/src/routes/aiRoutes.js
-./apps/backend/src/routes/authRoutes.js
-./apps/backend/src/routes/lostFoundRoutes.js
-./apps/backend/src/routes/paymentRoutes.js
-./apps/backend/src/routes/stationRoutes.js
-./apps/backend/src/routes/ticketRoutes.js
-./apps/backend/src/services
-./apps/backend/src/services/aiService.js
-./apps/backend/src/tests
-./apps/backend/src/tests/fare.test.js
-./apps/backend/src/utils
-./apps/backend/src/utils/seedKnowledge.js
-./apps/backend/src/utils/simulation.js
-./apps/frontend
-./apps/frontend/.gitignore
-./apps/frontend/eslint.config.js
-./apps/frontend/index.html
-./apps/frontend/package-lock.json
-./apps/frontend/package.json
-./apps/frontend/public
-./apps/frontend/public/favicon.svg
-./apps/frontend/public/icons.svg
-./apps/frontend/README.md
-./apps/frontend/src
-./apps/frontend/src/api
-./apps/frontend/src/api/metroApi.js
-./apps/frontend/src/App.css
-./apps/frontend/src/App.jsx
-./apps/frontend/src/assets
-./apps/frontend/src/assets/hero.png
-./apps/frontend/src/assets/react.svg
-./apps/frontend/src/assets/vite.svg
-./apps/frontend/src/components
-./apps/frontend/src/components/ChatBot.jsx
-./apps/frontend/src/components/MetroMap.jsx
-./apps/frontend/src/components/TicketModel.jsx
-./apps/frontend/src/index.css
-./apps/frontend/src/main.jsx
-./apps/frontend/src/pages
-./apps/frontend/src/pages/BuyTicket.jsx
-./apps/frontend/src/pages/Dashboard.jsx
-./apps/frontend/src/pages/Home.jsx
-./apps/frontend/src/pages/Login.jsx
-./apps/frontend/src/pages/LostFound.jsx
-./apps/frontend/src/pages/Register.jsx
-./apps/frontend/src/pages/TopUp.jsx
-./apps/frontend/vite.config.js
-./docker
-./docker/db_init
-./docker/db_init/init.sql
-./docker-compose.yml
-./README.md
-./run.sh
-./structure.txt
+├── .gitignore               
+
+├── apps/                    
+│
+│   ├── backend/             # Node.js + Express backend service
+│   │   ├── .env             # Environment variables (DB URL, JWT secrets, etc.)
+│   │   ├── package.json     # Backend dependencies & scripts
+│   │   ├── package-lock.json
+│   │
+│   │   └── src/             # Main backend source code
+│   │       ├── app.js       # Express app setup (middlewares, routes)
+│   │       ├── index.js     # Entry point (server start)
+│   │
+│   │       ├── config/      empty currently
+│   │
+│   │       ├── controllers/ # Handles request logic (MVC controller layer)
+│   │       │   ├── aiController.js        # AI-related endpoints
+│   │       │   ├── authController.js      # Login/Register logic
+│   │       │   ├── paymentController.js   # Payment processing
+│   │       │   ├── stationController.js   # Station-related APIs
+│   │       │   └── ticketController.js    # Ticket booking logic
+│   │
+│   │       ├── routes/      # API route definitions
+│   │       │   ├── aiRoutes.js
+│   │       │   ├── authRoutes.js
+│   │       │   ├── lostFoundRoutes.js
+│   │       │   ├── paymentRoutes.js
+│   │       │   ├── stationRoutes.js
+│   │       │   └── ticketRoutes.js
+│   │
+│   │       ├── services/    # Business logic layer (separates logic from controllers)
+│   │       │   └── aiService.js
+│   │
+│   │       ├── middleware/  # Custom Express middlewares
+│   │       │   └── authMiddleware.js   # JWT authentication check
+│   │
+│   │       ├── models/      # Database models / query abstractions
+│   │
+│   │       ├── data/        # Static or seed data
+│   │       │   └── fare.js  # Fare calculation data
+│   │
+│   │       ├── utils/       # Utility/helper functions
+│   │       │   ├── seedKnowledge.js  # AI/data seeding script : run node seedKnoeledge.js
+│   │       │   └── simulation.js     # Simulation logic (likely testing scenarios)
+│   │
+│   │       └── tests/       # Unit tests
+│   │           └── fare.test.js      # Test for fare calculation
+│
+│   ├── frontend/            # React (Vite) frontend application
+│   │   ├── .gitignore
+│   │   ├── package.json
+│   │   ├── package-lock.json
+│   │   ├── vite.config.js   # Vite configuration
+│   │   ├── index.html       # Root HTML file
+│   │   ├── eslint.config.js # Linting rules
+│   │   ├── README.md
+│   │
+│   │   ├── public/          # Static assets
+│   │   │   ├── favicon.svg
+│   │   │   └── icons.svg
+│   │
+│   │   └── src/             # Main React source code
+│   │       ├── main.jsx     # React entry point
+│   │       ├── App.jsx      # Root component
+│   │       ├── App.css
+│   │       ├── index.css
+│   │
+│   │       ├── api/         # API communication layer
+│   │       │   └── metroApi.js   # Axios instance + API calls
+│   │
+│   │       ├── components/  # Reusable UI components
+│   │       │   ├── ChatBot.jsx
+│   │       │   ├── MetroMap.jsx
+│   │       │   └── TicketModel.jsx
+│   │
+│   │       ├── pages/       # Route-level pages
+│   │       │   ├── Home.jsx
+│   │       │   ├── Login.jsx
+│   │       │   ├── Register.jsx
+│   │       │   ├── Dashboard.jsx
+│   │       │   ├── BuyTicket.jsx
+│   │       │   ├── TopUp.jsx
+│   │       │   └── LostFound.jsx
+│   │
+│   │       └── assets/      # Images and static media
+│   │           ├── hero.png
+│   │           ├── react.svg
+│   │           └── vite.svg
+│
+├── docker/                  # Docker-related setup
+│   └── db_init/             # Database initialization scripts
+│       └── init.sql         # SQL schema
+│
+├── docker-compose.yml       # Multi-service Docker orchestration
+├── run.sh                   # Script to run/start services
+├── README.md                # Project documentation
+├── structure.txt            # Generated folder structure file
