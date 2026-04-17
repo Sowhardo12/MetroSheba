@@ -4,11 +4,15 @@ import ChatBot from '../components/ChatBot';
 import { Map as MapIcon, Ticket, History, Search, LogOut, Wallet, TrainFront, Loader2 } from 'lucide-react';
 import { API } from '../api/metroApi';
 
+
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [journeys, setJourneys] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(Date.now());
+
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -21,7 +25,7 @@ const Dashboard = () => {
         
         setUser(userRes.data);
         setJourneys(ticketRes.data);
-        
+        console.log(ticketRes.data);
         // Sync local storage
         localStorage.setItem('user', JSON.stringify(userRes.data));
       } catch (err) {
@@ -36,11 +40,27 @@ const Dashboard = () => {
 
     fetchDashboardData();
   }, []);
+  //dynamically render validity status of tickets
+  useEffect(() => {
+  const interval = setInterval(() => {
+    setNow(Date.now()); //re-render every 30s
+  }, 30000);
+  console.log("updating time")
+  return () => clearInterval(interval); 
+}, []);
 
-  // const handleLogout = () => {
-  //   localStorage.clear();
-  //   navigate('/login');
-  // };
+
+
+const getTicketStatus = (createdAt,current_Time) => {
+  const purchaseTime = new Date(createdAt).getTime();
+  // const currentTime = new Date().getTime();
+  const currentTime = current_Time;
+  
+  // 2 minutes in milliseconds = 2 * 60 * 1000 = 120,000
+  const twoMinutes = 120000;  //for now checks 2 mins in prod will check 10 mins
+
+  return (currentTime - purchaseTime) < twoMinutes ? 'Active' : 'Expired';
+};
 
   const handleLogout = async () => {
   try {
@@ -144,6 +164,7 @@ const Dashboard = () => {
                 </div>
               ) : journeys.length > 0 ? (
                 journeys.map((j) => (
+                  
                   <div key={j.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-sm transition-all">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-green-100 rounded-xl text-green-600">
@@ -165,7 +186,9 @@ const Dashboard = () => {
                                   hour12: true,
                                   timeZone: 'Asia/Dhaka' 
                               })} • 
-                              {" " + j.status}
+                              <span className={getTicketStatus(j.created_at,now) === 'Active' ? 'text-green-500' : 'text-red-500'}>
+                              {" " + getTicketStatus(j.created_at,now)}
+                              </span>
                         </p>
                       </div>
                     </div>
