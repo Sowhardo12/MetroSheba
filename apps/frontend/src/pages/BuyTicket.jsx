@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Added useRef here
 import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { fetchStations, API } from '../api/metroApi';
-import { ArrowLeft, TrainFront, Info, CreditCard, CheckCircle } from 'lucide-react';
+import { ArrowLeft, TrainFront, Info, CreditCard, CheckCircle, Download } from 'lucide-react'; // Grouped icons
+import jsPDF from 'jspdf';
+// import html2canvas from 'html2canvas'; didn't work with tailwindcss v4
+import html2canvas from 'html2canvas-pro';
 
 const BuyTicket = () => {
   const navigate = useNavigate();
@@ -13,14 +16,40 @@ const BuyTicket = () => {
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Load stations on mount
+  // Reference for the PDF generator
+  const ticketRef = useRef();
+
+  const downloadPDF = async () => {
+    const element = ticketRef.current;
+    try {
+      // scale: 2 ensures the QR code and text are sharp in the PDF
+      const canvas = await html2canvas(element, { 
+        scale: 2,
+        useCORS: true, 
+        backgroundColor: '#ffffff' 
+      }); 
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      // Centering the ticket image in the PDF
+      pdf.addImage(imgData, 'PNG', 0, 20, pdfWidth, pdfHeight);
+      pdf.save(`MetroSheba_Ticket_${Date.now()}.pdf`);
+    } catch (err) {
+      console.error("PDF Generation Error:", err);
+      alert("Failed to generate PDF. Please try again.");
+    }
+  };
+
   useEffect(() => {
     fetchStations()
       .then(res => setStations(res.data))
       .catch(err => console.error("Error fetching stations:", err));
   }, []);
 
-  // Calculate fare when stations are selected
   useEffect(() => {
     if (from && to && from !== to) {
       API.get(`/stations/fare?startId=${from}&endId=${to}`)
@@ -33,7 +62,6 @@ const BuyTicket = () => {
 
   const handlePurchase = async () => {
     if (!fareInfo) return;
-
     setLoading(true);
     try {
       const { data } = await API.post('/tickets/buy', {
@@ -42,14 +70,12 @@ const BuyTicket = () => {
         fare: fareInfo.fare
       });
 
-      // Update local storage balance for consistency
       const localUser = JSON.parse(localStorage.getItem('user') || '{}');
       localStorage.setItem('user', JSON.stringify({
         ...localUser,
         balance: data.newBalance
       }));
 
-      // Setting the ticket triggers the view swap
       setTicket(data);
     } catch (err) {
       console.error("Purchase error:", err);
@@ -61,7 +87,6 @@ const BuyTicket = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-10">
-      {/* Header */}
       <div className="bg-white border-b p-4 flex items-center gap-4 shadow-sm">
         <button
           onClick={() => navigate('/dashboard')}
@@ -133,51 +158,57 @@ const BuyTicket = () => {
                 <CreditCard size={20} />
                 {loading ? "Processing..." : "Pay with Wallet"}
               </button>
-
-              <div className="flex gap-2 items-start bg-blue-50 p-4 rounded-xl">
-                <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
-                <p className="text-[11px] text-blue-600 leading-relaxed">
-                  Tickets are valid for 60 minutes from the time of purchase.
-                  Single entry only. Please ensure your balance is sufficient.
-                </p>
-              </div>
             </div>
           </div>
         ) : (
           /* TICKET VIEW */
-          <div className="bg-white rounded-[3rem] shadow-xl border-4 border-green-600 p-8 text-center animate-in zoom-in-95 duration-300">
-            <div className="bg-green-600 text-white py-2 px-6 rounded-full inline-flex items-center gap-2 mb-8 mx-auto">
-              <CheckCircle size={18} />
-              <span className="font-bold text-sm tracking-tight">Active Journey Ticket</span>
-            </div>
+          <div className="flex flex-col gap-6 items-center">
+            {/* Wrapper for PDF Capture */}
+            <div ref={ticketRef} style={{ borderColor: '#16a34a' }} className="w-full bg-white rounded-[3rem] shadow-xl border-4 border-green-600 p-8 text-center animate-in zoom-in-95 duration-300">
+              <div style={{ backgroundColor: '#16a34a' }} className=" text-white py-2 px-6 rounded-full inline-flex items-center gap-2 mb-8 mx-auto">
+                <CheckCircle size={18} />
+                <span className="font-bold text-sm tracking-tight">Active Journey Ticket</span>
+              </div>
 
-            <div className="bg-slate-100 p-4 rounded-3xl inline-block mb-6 shadow-inner">
-              <div className="bg-white p-4 rounded-2xl">
-                {ticket?.qr_code_data ? (
-                  <QRCodeSVG value={String(ticket.qr_code_data)} size={200} />
-                ) : (
-                  <div className="w-[200px] h-[200px] flex items-center justify-center text-slate-400">
-                    Generating QR...
-                  </div>
-                )}
+              <div className="bg-slate-100 p-4 rounded-3xl inline-block mb-6 shadow-inner">
+                <div className="bg-white p-4 rounded-2xl">
+                  {ticket?.qr_code_data ? (
+                    <QRCodeSVG value={String(ticket.qr_code_data)} size={200} />
+                  ) : (
+                    <div className="w-[200px] h-[200px] flex items-center justify-center text-slate-400">
+                      Generating QR...
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-4">
+                <p className="text-2xl font-black text-slate-800 uppercase tracking-tighter">MRT-6 Digital Pass</p>
+                <div className="flex justify-center items-center gap-4 text-slate-500 font-bold">
+                  <span>Valid for 1 Hour</span>
+                  <span className="h-1 w-1 bg-slate-300 rounded-full"></span>
+                  <span>৳{ticket?.fare || fareInfo?.fare}</span>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-4 mb-8">
-              <p className="text-2xl font-black text-slate-800 uppercase tracking-tighter">MRT-6 Digital Pass</p>
-              <div className="flex justify-center items-center gap-4 text-slate-500 font-bold">
-                <span>Valid for 1 Hour</span>
-                <span className="h-1 w-1 bg-slate-300 rounded-full"></span>
-                <span>৳{ticket?.fare || fareInfo?.fare}</span>
-              </div>
-            </div>
+            {/* Actions Section - Not included in PDF */}
+            <div className="w-full space-y-3">
+              <button
+                onClick={downloadPDF}
+                className="w-full bg-green-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-all shadow-lg shadow-green-100"
+              >
+                <Download size={20} />
+                Download PDF Ticket
+              </button>
 
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-all"
-            >
-              Return to Dashboard
-            </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-all"
+              >
+                Return to Dashboard
+              </button>
+            </div>
           </div>
         )}
       </div>
