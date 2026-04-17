@@ -50,12 +50,18 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
     const { email, password } = req.body;
+    console.log("email ",email);
+    console.log("password ",password);
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
+    console.log(user);
+    console.log("Input Password:", password);
+    console.log("Stored Hash:", user.password_hash);
 
     if (user && await bcrypt.compare(password, user.password_hash)) {
         // const token = jwt.sign({ id: user.id }, 'METRO_SECRET', { expiresIn: '1h' });  old way
         //access and refresh token system  calling function
+        console.log("compare success")
         const { accessToken, refreshToken } = generateTokens(user);
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true, //prevents client js from access cookie by document.cookie ; prevent XSS attacks
@@ -69,6 +75,19 @@ const login = async (req, res) => {
         res.status(401).json({ error: "Invalid credentials" });
     }
 };
+
+const logout = (req, res) => {
+  // Clearing the cookie by name
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: false, // Set to true if using HTTPS/Production
+    sameSite: 'lax',
+    path: '/' // Ensure this matches the path it was set on
+  });
+  
+  return res.status(200).json({ message: "Logged out successfully" });
+};
+
 
 const getMe = async (req, res) => {
   try {
@@ -112,4 +131,4 @@ const refreshToken = async (req, res) => {
 };
 
 
-module.exports = { register, login, getMe, refreshToken };
+module.exports = { register, login, getMe, refreshToken, logout };

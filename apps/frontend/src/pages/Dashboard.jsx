@@ -37,10 +37,25 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
-  const handleLogout = () => {
+  // const handleLogout = () => {
+  //   localStorage.clear();
+  //   navigate('/login');
+  // };
+
+  const handleLogout = async () => {
+  try {
+    // Notify the server to destroy the cookie
+    await API.post('/auth/logout');
+  } catch (err) {
+    console.error("Server logout failed, clearing local anyway:", err);
+  } finally {
+    // Clean up frontend state
     localStorage.clear();
-    navigate('/login');
-  };
+    // Use window.location instead of navigate for a "Hard Reset" 
+    // This clears any old headers stuck in the Axios instance memory
+    window.location.href = '/login'; 
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">

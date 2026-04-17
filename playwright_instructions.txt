@@ -1,0 +1,7 @@
+in frontend, in tests/ dir, the tests will be written in .spec.js  extension
+go there and run :  npx playwright test tests/test1.spec.js --ui     / --debug ; here test1.spec.js is the name of testcase
+window and code window will open, tap "resume" button
+
+
+to use: codegen to create scripts :
+npx playwright codegen http://localhost:5173
