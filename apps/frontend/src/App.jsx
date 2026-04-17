@@ -9,9 +9,13 @@ import { fetchStations } from './api/metroApi';
 import BuyTicket from './pages/BuyTicket';
 import LostFound from './pages/LostFound';
 import TopUp from './pages/TopUp';
+import { useLocation } from 'react-router-dom';
+import Footer from './components/Footer';
 
 function App() {
   const [stations, setStations] = useState([]);
+  const location = useLocation();
+  const showFooter = location.pathname !== '/map';
   
   useEffect(() => {
     fetchStations().then(res => setStations(res.data)).catch(err => console.log(err));
@@ -22,6 +26,7 @@ function App() {
   };
 
   return (
+    <div>
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
@@ -42,6 +47,8 @@ function App() {
         </ProtectedRoute>
       } />
     </Routes>
+    {showFooter && <Footer />}
+    </div>
   );
 }
 
