@@ -22,7 +22,7 @@ const getAllStations = async (req, res) => {
 };
 
 const calculateFare = (req, res) => {
-  const { startId, endId } = req.query;
+  const { startId, endId } = req.query;    //sent using request quary
   //logical range check
   if(startId<0 || endId>16) return res.status(404).json({error:"Invalid Stations"});
   const sId = String(startId);

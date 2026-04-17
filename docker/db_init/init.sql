@@ -58,9 +58,13 @@ CREATE TABLE IF NOT EXISTS tickets (
     to_station INTEGER REFERENCES stations(id),
     fare DECIMAL(10, 2) NOT NULL,
     qr_code_data TEXT NOT NULL,
-    status VARCHAR(20) DEFAULT 'valid', -- 'valid', 'used', 'expired'
+    -- status VARCHAR(20) DEFAULT 'valid', -- 'valid', 'used', 'expired'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '1 hour')
+    expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '1 hour'),
+    status VARCHAR(20) DEFAULT 'active', -- the second status
+    entry_station_id INTEGER,
+    exit_station_id INTEGER
+
 );
 --mock bank data 
 CREATE TABLE IF NOT EXISTS bank_accounts (

@@ -54,6 +54,7 @@ const login = async (req, res) => {
     console.log("password ",password);
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
+    
     console.log(user);
     console.log("Input Password:", password);
     console.log("Stored Hash:", user.password_hash);

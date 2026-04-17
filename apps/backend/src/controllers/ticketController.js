@@ -27,7 +27,7 @@ const buyTicket = async (req, res) => {
     await client.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [fare, userId]);
 
     // 3. Create Ticket
-    const qrData = `TICKET-${userId}-${Date.now()}`;
+    const qrData = `TICKET-${userId}-${Date.now()}-${from_station}-${to_station}-${fare}`;   //modified 
     const ticketRes = await client.query(
       'INSERT INTO tickets (user_id, from_station, to_station, fare, qr_code_data) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [userId, from_station, to_station, fare, qrData]

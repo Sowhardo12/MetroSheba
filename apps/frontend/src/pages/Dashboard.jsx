@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChatBot from '../components/ChatBot';
-import { Map as MapIcon, Ticket, History, Search, LogOut, Wallet, TrainFront, Loader2 } from 'lucide-react';
+import { Map as MapIcon, Ticket, History, Search, LogOut, Wallet, TrainFront, Loader2, Smartphone } from 'lucide-react';
 import { API } from '../api/metroApi';
-
-
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -13,11 +11,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(Date.now());
 
-
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch everything in one go to prevent multiple re-renders
         const [userRes, ticketRes] = await Promise.all([
           API.get('/auth/me'),
           API.get('/tickets/my-tickets')
@@ -25,12 +21,9 @@ const Dashboard = () => {
         
         setUser(userRes.data);
         setJourneys(ticketRes.data);
-        console.log(ticketRes.data);
-        // Sync local storage
         localStorage.setItem('user', JSON.stringify(userRes.data));
       } catch (err) {
         console.error("Dashboard sync failed", err);
-        // Fallback to local storage if API fails
         const localUser = localStorage.getItem('user');
         if (localUser) setUser(JSON.parse(localUser));
       } finally {
@@ -40,42 +33,37 @@ const Dashboard = () => {
 
     fetchDashboardData();
   }, []);
-  //dynamically render validity status of tickets
+
   useEffect(() => {
-  const interval = setInterval(() => {
-    setNow(Date.now()); //re-render every 30s
-  }, 30000);
-  console.log("updating time")
-  return () => clearInterval(interval); 
-}, []);
+    const interval = setInterval(() => {
+      setNow(Date.now()); 
+    }, 30000);
+    return () => clearInterval(interval); 
+  }, []);
 
+  // UPDATED LOGIC: Checks DB status first, then your time-based validity
+  const getTicketStatus = (ticket, currentTime) => {
+    if (ticket.status === 'completed') return 'Used';
+    
+    const purchaseTime = new Date(ticket.created_at).getTime();
+    const twoMinutes = 120000; // Keep your testing variable
 
-
-const getTicketStatus = (createdAt,current_Time) => {
-  const purchaseTime = new Date(createdAt).getTime();
-  // const currentTime = new Date().getTime();
-  const currentTime = current_Time;
-  
-  // 2 minutes in milliseconds = 2 * 60 * 1000 = 120,000
-  const twoMinutes = 120000;  //for now checks 2 mins in prod will check 10 mins
-
-  return (currentTime - purchaseTime) < twoMinutes ? 'Active' : 'Expired';
-};
+    if ((currentTime - purchaseTime) > twoMinutes) return 'Expired';
+    if (ticket.status === 'in-transit') return 'In Use';
+    
+    return 'Active';
+  };
 
   const handleLogout = async () => {
-  try {
-    // Notify the server to destroy the cookie
-    await API.post('/auth/logout');
-  } catch (err) {
-    console.error("Server logout failed, clearing local anyway:", err);
-  } finally {
-    // Clean up frontend state
-    localStorage.clear();
-    // Use window.location instead of navigate for a "Hard Reset" 
-    // This clears any old headers stuck in the Axios instance memory
-    window.location.href = '/login'; 
-  }
-};
+    try {
+      await API.post('/auth/logout');
+    } catch (err) {
+      console.error("Logout failed:", err);
+    } finally {
+      localStorage.clear();
+      window.location.href = '/login'; 
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
@@ -92,46 +80,36 @@ const getTicketStatus = (createdAt,current_Time) => {
 
       <div className="max-w-5xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         
-     
         {/* Left: User Stats */}
-<div className="md:col-span-1 space-y-6">
-  <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-    <h2 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">My Account</h2>
-    <p className="text-2xl font-black text-slate-800">
-      {loading ? <span className="text-slate-200 animate-pulse">Loading...</span> : user?.name}
-    </p>
-    
-    {/* Wallet Card */}
-    <div className="mt-4 p-4 bg-green-50 rounded-2xl flex items-center justify-between border border-green-100">
-      <div className="flex items-center gap-3">
-        <div className="bg-green-600 p-2 rounded-xl text-white shadow-sm">
-          <Wallet size={18} />
-        </div>
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-green-600 uppercase tracking-tighter">Balance</span>
-          <span className="text-xl font-black text-green-700 leading-tight">
-            ৳{loading ? '--' : (user?.balance || '0.00')}
-          </span>
-        </div>
-      </div>
+        <div className="md:col-span-1 space-y-6">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+            <h2 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">My Account</h2>
+            <p className="text-2xl font-black text-slate-800">
+              {loading ? <span className="text-slate-200 animate-pulse">Loading...</span> : user?.name}
+            </p>
+            
+            <div className="mt-4 p-4 bg-green-50 rounded-2xl flex items-center justify-between border border-green-100">
+              <div className="flex items-center gap-3">
+                <div className="bg-green-600 p-2 rounded-xl text-white shadow-sm">
+                  <Wallet size={18} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-green-600 uppercase tracking-tighter">Balance</span>
+                  <span className="text-xl font-black text-green-700 leading-tight">
+                    ৳{loading ? '--' : (user?.balance || '0.00')}
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => navigate('/topup')} className="bg-white text-green-600 px-2 py-2 rounded-xl text-xs font-black uppercase shadow-sm border border-green-100 hover:bg-green-600 hover:text-white transition-all">
+                + Top Up
+              </button>
+            </div>
+          </div>
 
-      {/* Top Up Button */}
-      <button 
-        onClick={() => navigate('/topup')}
-        className="bg-white text-green-600 px-2 py-2 rounded-xl text-xs font-black uppercase shadow-sm border border-green-100 hover:bg-green-600 hover:text-white transition-all active:scale-95 flex items-center gap-1"
-      >
-        <span>+</span> Top Up
-      </button>
-    </div>
-  </div>
-
-  <button 
-    onClick={() => navigate('/map')}
-    className="w-full flex items-center justify-center gap-3 bg-slate-900 text-white p-5 rounded-2xl font-bold hover:bg-black active:scale-[0.98] transition-all shadow-lg shadow-slate-200"
-  >
-    <MapIcon size={20} /> View Metro Map
-  </button>
-</div>
+          <button onClick={() => navigate('/map')} className="w-full flex items-center justify-center gap-3 bg-slate-900 text-white p-5 rounded-2xl font-bold hover:bg-black active:scale-[0.98] transition-all shadow-lg shadow-slate-200">
+            <MapIcon size={20} /> View Metro Map
+          </button>
+        </div>
 
         {/* Center/Right: Actions & History */}
         <div className="md:col-span-2 space-y-6">
@@ -149,6 +127,15 @@ const getTicketStatus = (createdAt,current_Time) => {
             </div>
           </div>
 
+          {/* NEW STATION GATE BUTTON - Positioned prominently */}
+          <button 
+            onClick={() => navigate('/station')} 
+            className="w-full bg-slate-900 text-white p-4 rounded-3xl font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-black transition-all"
+          >
+            <Smartphone size={20}/>
+            Station Entry/Exit Gate
+          </button>
+
           {/* Recent Journeys Section */}
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
             <div className="flex items-center gap-2 mb-6">
@@ -163,41 +150,42 @@ const getTicketStatus = (createdAt,current_Time) => {
                   <p className="text-slate-400 text-sm">Fetching trips...</p>
                 </div>
               ) : journeys.length > 0 ? (
-                journeys.map((j) => (
-                  
-                  <div key={j.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-sm transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-100 rounded-xl text-green-600">
-                        <TrainFront size={20} />
+                journeys.map((j) => {
+                  const status = getTicketStatus(j, now);
+                  return (
+                    <div key={j.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-sm transition-all">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-100 rounded-xl text-green-600">
+                          <TrainFront size={20} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm">
+                            {j.from_station_name} → {j.to_station_name}
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                            {new Date(j.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} • 
+                            {new Date(j.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })} • 
+                            <span className={status === 'Active' || status === 'In Use' ? 'text-green-500' : 'text-red-500'}>
+                              {" " + status}
+                            </span>
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-slate-800 text-sm">
-                          {j.from_station_name} → {j.to_station_name}
-                        </p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
-                              {new Date(j.created_at).toLocaleDateString('en-GB', { 
-                                  day: 'numeric', 
-                                  month: 'short', 
-                                  timeZone: 'Asia/Dhaka' 
-                              })} • 
-                              {new Date(j.created_at).toLocaleTimeString('en-US', { 
-                                  hour: '2-digit', 
-                                  minute: '2-digit',
-                                  hour12: true,
-                                  timeZone: 'Asia/Dhaka' 
-                              })} • 
-                              <span className={getTicketStatus(j.created_at,now) === 'Active' ? 'text-green-500' : 'text-red-500'}>
-                              {" " + getTicketStatus(j.created_at,now)}
-                              </span>
-                        </p>
+                      <div className="text-right flex flex-col items-end">
+                        <p className="font-black text-slate-700">৳{j.fare}</p>
+                        {(status === 'Active' || status === 'In Use') && (
+                          <button 
+                            onClick={() => navigate('/station')} 
+                            className="text-[9px] bg-slate-800 text-white px-2 py-1 rounded-md font-bold mt-1"
+                          >
+                            PUNCH
+                          </button>
+                        )}
+                        <p className="text-[9px] text-slate-300 font-bold">ID: #{j.id}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-      <p className="font-black text-slate-700">৳{j.fare}</p>
-      <p className="text-[9px] text-slate-300 font-bold">ID: #{j.id}</p>
-    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center py-10">
                   <p className="text-slate-400 italic text-sm">No recent trips found.</p>
@@ -207,10 +195,240 @@ const getTicketStatus = (createdAt,current_Time) => {
           </div>
         </div>
       </div>
-
       <ChatBot />
     </div>
   );
 };
 
 export default Dashboard;
+
+
+
+// import React, { useState, useEffect } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import ChatBot from '../components/ChatBot';
+// import { Map as MapIcon, Ticket, History, Search, LogOut, Wallet, TrainFront, Loader2 } from 'lucide-react';
+// import { API } from '../api/metroApi';
+// import { Smartphone } from 'lucide-react'; // Add this to imports
+
+
+
+// const Dashboard = () => {
+//   const navigate = useNavigate();
+//   const [user, setUser] = useState(null);
+//   const [journeys, setJourneys] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [now, setNow] = useState(Date.now());
+
+
+//   useEffect(() => {
+//     const fetchDashboardData = async () => {
+//       try {
+//         // Fetch everything in one go to prevent multiple re-renders
+//         const [userRes, ticketRes] = await Promise.all([
+//           API.get('/auth/me'),
+//           API.get('/tickets/my-tickets')
+//         ]);
+        
+//         setUser(userRes.data);
+//         setJourneys(ticketRes.data);
+//         console.log(ticketRes.data);
+//         // Sync local storage
+//         localStorage.setItem('user', JSON.stringify(userRes.data));
+//       } catch (err) {
+//         console.error("Dashboard sync failed", err);
+//         // Fallback to local storage if API fails
+//         const localUser = localStorage.getItem('user');
+//         if (localUser) setUser(JSON.parse(localUser));
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchDashboardData();
+//   }, []);
+//   //dynamically render validity status of tickets
+//   useEffect(() => {
+//   const interval = setInterval(() => {
+//     setNow(Date.now()); //re-render every 30s
+//   }, 30000);
+//   console.log("updating time")
+//   return () => clearInterval(interval); 
+// }, []);
+
+
+
+// const getTicketStatus = (createdAt,current_Time) => {
+//   const purchaseTime = new Date(createdAt).getTime();
+//   // const currentTime = new Date().getTime();
+//   const currentTime = current_Time;
+  
+//   // 2 minutes in milliseconds = 2 * 60 * 1000 = 120,000
+//   const twoMinutes = 120000;  //for now checks 2 mins in prod will check 10 mins
+
+//   return (currentTime - purchaseTime) < twoMinutes ? 'Active' : 'Expired';
+// };
+
+//   const handleLogout = async () => {
+//   try {
+//     // Notify the server to destroy the cookie
+//     await API.post('/auth/logout');
+//   } catch (err) {
+//     console.error("Server logout failed, clearing local anyway:", err);
+//   } finally {
+//     // Clean up frontend state
+//     localStorage.clear();
+//     // Use window.location instead of navigate for a "Hard Reset" 
+//     // This clears any old headers stuck in the Axios instance memory
+//     window.location.href = '/login'; 
+//   }
+// };
+
+//   return (
+//     <div className="min-h-screen bg-slate-50 font-sans">
+//       {/* Navbar */}
+//       <nav className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+//         <div className="flex items-center gap-2">
+//           <div className="bg-green-600 p-2 rounded-lg text-white"><Ticket size={20}/></div>
+//           <span className="font-black text-xl italic tracking-tighter">MetroSheba</span>
+//         </div>
+//         <button onClick={handleLogout} className="text-red-500 font-bold flex items-center gap-2 hover:bg-red-50 px-3 py-2 rounded-xl transition-colors">
+//           <LogOut size={18}/> Logout
+//         </button>
+//       </nav>
+
+//       <div className="max-w-5xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+     
+//         {/* Left: User Stats */}
+// <div className="md:col-span-1 space-y-6">
+//   <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+//     <h2 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">My Account</h2>
+//     <p className="text-2xl font-black text-slate-800">
+//       {loading ? <span className="text-slate-200 animate-pulse">Loading...</span> : user?.name}
+//     </p>
+    
+//     {/* Wallet Card */}
+//     <div className="mt-4 p-4 bg-green-50 rounded-2xl flex items-center justify-between border border-green-100">
+//       <div className="flex items-center gap-3">
+//         <div className="bg-green-600 p-2 rounded-xl text-white shadow-sm">
+//           <Wallet size={18} />
+//         </div>
+//         <div className="flex flex-col">
+//           <span className="text-[10px] font-bold text-green-600 uppercase tracking-tighter">Balance</span>
+//           <span className="text-xl font-black text-green-700 leading-tight">
+//             ৳{loading ? '--' : (user?.balance || '0.00')}
+//           </span>
+//         </div>
+//       </div>
+
+//       {/* Top Up Button */}
+//       <button 
+//         onClick={() => navigate('/topup')}
+//         className="bg-white text-green-600 px-2 py-2 rounded-xl text-xs font-black uppercase shadow-sm border border-green-100 hover:bg-green-600 hover:text-white transition-all active:scale-95 flex items-center gap-1"
+//       >
+//         <span>+</span> Top Up
+//       </button>
+//     </div>
+//   </div>
+
+//   <button 
+//     onClick={() => navigate('/map')}
+//     className="w-full flex items-center justify-center gap-3 bg-slate-900 text-white p-5 rounded-2xl font-bold hover:bg-black active:scale-[0.98] transition-all shadow-lg shadow-slate-200"
+//   >
+//     <MapIcon size={20} /> View Metro Map
+//   </button>
+// </div>
+
+//         {/* Center/Right: Actions & History */}
+//         <div className="md:col-span-2 space-y-6">
+//           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+//             <div onClick={() => navigate('/buy-ticket')} className="group bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:border-green-500 cursor-pointer transition-all hover:shadow-md">
+//               <Ticket className="text-green-600 mb-3 group-hover:scale-110 transition-transform" size={32} />
+//               <h3 className="font-bold text-lg">Buy QR Ticket</h3>
+//               <p className="text-sm text-slate-500">Instant 1-hour valid ticket</p>
+//             </div>
+            
+//             <div onClick={() => navigate('/lost-found')} className="group bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:border-orange-400 cursor-pointer transition-all hover:shadow-md">
+//               <Search className="text-orange-500 mb-3 group-hover:scale-110 transition-transform" size={32} />
+//               <h3 className="font-bold text-lg">Lost & Found</h3>
+//               <p className="text-sm text-slate-500">Report or claim items</p>
+//             </div>
+//           </div>
+
+
+//           {/* NEW STATION GATE BUTTON */}
+//   <button 
+//     onClick={() => navigate('/station')}
+//     className="bg-slate-900 text-white p-4 rounded-3xl font-bold flex flex-col items-center gap-2 shadow-lg shadow-slate-200"
+//   >
+//     <div className="bg-white/20 p-2 rounded-full"><Smartphone size={20}/></div>
+//     Enter Station
+//   </button>
+
+
+//           {/* Recent Journeys Section */}
+//           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+//             <div className="flex items-center gap-2 mb-6">
+//               <History size={20} className="text-slate-400" />
+//               <h3 className="font-bold text-slate-800">Recent Journeys</h3>
+//             </div>
+
+//             <div className="space-y-3">
+//               {loading ? (
+//                 <div className="flex flex-col items-center py-10 gap-2">
+//                   <Loader2 className="animate-spin text-slate-200" size={30} />
+//                   <p className="text-slate-400 text-sm">Fetching trips...</p>
+//                 </div>
+//               ) : journeys.length > 0 ? (
+//                 journeys.map((j) => (
+                  
+//                   <div key={j.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-sm transition-all">
+//                     <div className="flex items-center gap-3">
+//                       <div className="p-2 bg-green-100 rounded-xl text-green-600">
+//                         <TrainFront size={20} />
+//                       </div>
+//                       <div>
+//                         <p className="font-bold text-slate-800 text-sm">
+//                           {j.from_station_name} → {j.to_station_name}
+//                         </p>
+//                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+//                               {new Date(j.created_at).toLocaleDateString('en-GB', { 
+//                                   day: 'numeric', 
+//                                   month: 'short', 
+//                                   timeZone: 'Asia/Dhaka' 
+//                               })} • 
+//                               {new Date(j.created_at).toLocaleTimeString('en-US', { 
+//                                   hour: '2-digit', 
+//                                   minute: '2-digit',
+//                                   hour12: true,
+//                                   timeZone: 'Asia/Dhaka' 
+//                               })} • 
+//                               <span className={getTicketStatus(j.created_at,now) === 'Active' ? 'text-green-500' : 'text-red-500'}>
+//                               {" " + getTicketStatus(j.created_at,now)}
+//                               </span>
+//                         </p>
+//                       </div>
+//                     </div>
+//                     <div className="text-right">
+//       <p className="font-black text-slate-700">৳{j.fare}</p>
+//       <p className="text-[9px] text-slate-300 font-bold">ID: #{j.id}</p>
+//     </div>
+//                   </div>
+//                 ))
+//               ) : (
+//                 <div className="text-center py-10">
+//                   <p className="text-slate-400 italic text-sm">No recent trips found.</p>
+//                 </div>
+//               )}
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       <ChatBot />
+//     </div>
+//   );
+// };
+
+// export default Dashboard;

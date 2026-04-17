@@ -173,8 +173,27 @@ const BuyTicket = () => {
               <div className="bg-slate-100 p-4 rounded-3xl inline-block mb-6 shadow-inner">
                 <div className="bg-white p-4 rounded-2xl">
                   {ticket?.qr_code_data ? (
-                    <QRCodeSVG value={String(ticket.qr_code_data)} size={200} />
-                  ) : (
+                    <div className="flex flex-col items-center gap-4">
+        <QRCodeSVG value={String(ticket.qr_code_data)} size={200} />
+        
+        {/* FIX: Changed {qr_code_data} to {ticket.qr_code_data} */}
+        <div className="bg-slate-50 p-2 rounded-lg border border-slate-200 w-full">
+          <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Gate Pass String</p>
+          <p className="text-[9px] font-mono break-all text-slate-600 leading-tight">
+            {ticket.qr_code_data}
+          </p>
+          <button 
+            onClick={() => {
+              navigator.clipboard.writeText(ticket.qr_code_data);
+              alert("QR String copied for Gate Simulator!");
+            }}
+            className="mt-2 text-[10px] bg-slate-200 hover:bg-slate-300 px-2 py-1 rounded font-bold transition-colors"
+          >
+            Copy String
+          </button>
+        </div>
+      </div>
+    ) : (
                     <div className="w-[200px] h-[200px] flex items-center justify-center text-slate-400">
                       Generating QR...
                     </div>
