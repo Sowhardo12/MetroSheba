@@ -3,12 +3,23 @@ import { useNavigate, Link } from 'react-router-dom';
 import { register } from '../api/metroApi';
 import { UserPlus } from 'lucide-react';
 
+const validatePassword = (password) => {
+  // Minimum 8 chars, at least 1 uppercase, 1 lowercase, 1 number, 1 special char
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+  return regex.test(password);
+};
+
 const Register = () => {
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if(!validatePassword(formData.password)){
+      setError("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.");
+      return;
+    }
     try {
       await register(formData);
       alert("Account created! Please login.");
@@ -25,7 +36,10 @@ const Register = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="text" placeholder="Full Name" className="w-full rounded-lg border p-3 outline-none focus:ring-2 focus:ring-green-500" onChange={(e) => setFormData({...formData, name: e.target.value})} required />
           <input type="email" placeholder="Email" className="w-full rounded-lg border p-3 outline-none focus:ring-2 focus:ring-green-500" onChange={(e) => setFormData({...formData, email: e.target.value})} required />
+          <div>
           <input type="password" placeholder="Password" className="w-full rounded-lg border p-3 outline-none focus:ring-2 focus:ring-green-500" onChange={(e) => setFormData({...formData, password: e.target.value})} required />
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          </div>
           <button type="submit" className="w-full rounded-lg bg-green-600 py-3 font-bold text-white hover:bg-green-700">Register</button>
         </form>
         <p className="mt-4 text-center text-sm text-slate-500">Already have an account? <Link to="/login" className="text-green-600 font-bold">Login</Link></p>

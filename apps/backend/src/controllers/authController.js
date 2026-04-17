@@ -20,9 +20,24 @@ const generateTokens = (user) => {
   return { accessToken, refreshToken };
 };
 
+const validatePassword = (password) => {
+  // At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+  return regex.test(password);
+};
+
 
 const register = async (req, res) => {
     const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+         return res.status(400).json({ error: "All fields are required" });
+    } 
+    //password validation
+    if(!validatePassword(password)){
+      return res.status(400).json({
+         error: "Password must be at least 8 chars and include uppercase, lowercase, number, and special character",
+      });
+    }
     const hashed = await bcrypt.hash(password, 10);
     try {
         const result = await pool.query(

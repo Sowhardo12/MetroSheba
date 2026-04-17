@@ -6,12 +6,12 @@ const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([
-    { role: 'bot', text: 'Salam! I am MetroSheba AI. How can I help you navigate MRT-6 today?' }
+    { role: 'bot', text: 'Hello There! I am MetroSheba AI. How can I help you navigate MRT-6 today?' }
   ]);
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
 
-  // Auto-scroll to bottom of chat
+  //Auto-scroll
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
