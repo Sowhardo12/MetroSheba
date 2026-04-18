@@ -6,6 +6,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL,
   ? {rejectUnauthorized: false} : false
  });
 
+ const isProduction = process.env.NODE_ENV === 'production';
 
 const generateTokens = (user) => {
   const accessToken = jwt.sign(
@@ -69,8 +70,8 @@ const login = async (req, res) => {
         const { accessToken, refreshToken } = generateTokens(user);
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true, //prevents client js from access cookie by document.cookie ; prevent XSS attacks
-            secure: false, // Only over HTTPS in production works
-            sameSite: 'Lax',  //prevent CSRF
+            secure: isProduction, // Only over HTTPS in production works
+            sameSite: isProduction? 'none':'lax',  //prevent CSRF
              maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
            });
 
@@ -84,8 +85,8 @@ const logout = (req, res) => {
   // Clearing the cookie by name
   res.clearCookie('refreshToken', {
     httpOnly: true,
-    secure: false, // Set to true if using HTTPS/Production
-    sameSite: 'lax',
+    secure: isProduction, // Set to true if using HTTPS/Production
+    sameSite: isProduction? 'none':'lax',
     path: '/' // Ensure this matches the path it was set on
   });
   
