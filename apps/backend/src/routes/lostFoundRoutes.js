@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL.includes('neon.tech') || process.env.NODE_ENV === 'production'
+  ? {rejectUnauthorized: false} : false
+ });
 
 // Get all items
 router.get('/', async (req, res) => {

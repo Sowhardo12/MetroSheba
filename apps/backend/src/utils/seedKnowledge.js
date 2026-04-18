@@ -4,7 +4,10 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const { Pool } = require('pg');
 const { generateEmbedding } = require('../services/aiService');
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL.includes('neon.tech') || process.env.NODE_ENV === 'production'
+  ? {rejectUnauthorized: false} : false
+ });
 
 const dhakaLandmarks = [
   // Original 5

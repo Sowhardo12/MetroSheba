@@ -12,9 +12,10 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const app = express();
 
 // PostgreSQL Connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+const pool = new Pool({ connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL.includes('neon.tech') || process.env.NODE_ENV === 'production'
+  ? {rejectUnauthorized: false} : false
+ });
 
 
 

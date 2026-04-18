@@ -1,8 +1,8 @@
 const { Groq } = require("groq-sdk");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-// require('dotenv').config();
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+require('dotenv').config();
+// const path = require('path');
+// require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 //API keys injection from .env file
 const groq = new Groq({ apiKey:process.env.GROQ_API_KEY });

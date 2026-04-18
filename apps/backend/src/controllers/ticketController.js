@@ -1,5 +1,8 @@
 const { Pool } = require('pg');
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL.includes('neon.tech') || process.env.NODE_ENV === 'production'
+  ? {rejectUnauthorized: false} : false
+ });
 
 const buyTicket = async (req, res) => {
   const { from_station, to_station, fare } = req.body;

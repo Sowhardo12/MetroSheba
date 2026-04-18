@@ -2,7 +2,10 @@ const { Pool } = require('pg');
 const { getMockStatus } = require('../utils/simulation');
 const fareMatrix = require('../data/fare');
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL.includes('neon.tech') || process.env.NODE_ENV === 'production'
+  ? {rejectUnauthorized: false} : false
+ });
 
 const getAllStations = async (req, res) => {
   try {
