@@ -41,7 +41,6 @@ const Dashboard = () => {
     return () => clearInterval(interval); 
   }, []);
 
-  // UPDATED LOGIC: Checks DB status first, then your time-based validity
   const getTicketStatus = (ticket, currentTime) => {
     if (ticket.status === 'completed') return 'Used';
     
