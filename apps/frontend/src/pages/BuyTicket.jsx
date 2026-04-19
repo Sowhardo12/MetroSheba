@@ -115,7 +115,7 @@ const BuyTicket = () => {
                     className="w-full pt-6 pb-3 px-4 bg-slate-50 rounded-2xl border-2 border-transparent focus:border-green-500 outline-none transition-all font-bold text-slate-700 appearance-none"
                     onChange={e => setFrom(e.target.value)}
                   >
-                    <option value="">Select Origin</option>
+                    <option value="">Select Origin station</option>
                     {stations.map(s => (
                       <option key={`from-${s.id}`} value={s.id}>{s.name}</option>
                     ))}
@@ -129,7 +129,7 @@ const BuyTicket = () => {
                     className="w-full pt-6 pb-3 px-4 bg-slate-50 rounded-2xl border-2 border-transparent focus:border-green-500 outline-none transition-all font-bold text-slate-700 appearance-none"
                     onChange={e => setTo(e.target.value)}
                   >
-                    <option value="">Select Destination</option>
+                    <option value="">Select Destination station</option>
                     {stations.map(s => (
                       <option key={`to-${s.id}`} value={s.id}>{s.name}</option>
                     ))}

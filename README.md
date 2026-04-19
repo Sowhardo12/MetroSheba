@@ -20,6 +20,15 @@ security:
 4. users can't punch in and out in same station
 5. users can't use two emails (to be updated)
 
+issues in prod: 
+1. when refresh shows error message everything else works fine
+2. 
+
+to implement:
+1. update the fonts and logos and writings 
+2. focus on the RAG pipeline and make it better at response
+3. try to add dark mode feature [for later]
+
 
 
 

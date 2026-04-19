@@ -13,9 +13,10 @@ export default function Home() {
           </span>
         </div>
         <div className="space-x-2 md:space-x-6 flex items-center">
-          <Link to="/login" className="text-sm font-bold text-slate-600 hover:text-green-600 px-2">Login</Link>
-          <Link to="/register" className="bg-green-600 text-white px-5 py-2 rounded-lg font-bold text-sm hover:bg-green-700 transition-all shadow-lg shadow-green-200">
-            Join Now
+          <p className="text-sm font-bold text-slate-600">Already have an account?</p>
+          {/* <Link to="/login" className="text-sm font-bold text-slate-600 hover:text-green-600 px-2">Login</Link> */}
+          <Link to="/login" className="bg-green-600 text-white px-5 py-2 rounded-lg font-bold text-sm hover:bg-green-700 transition-all shadow-lg shadow-green-200">
+            Log In
           </Link>
         </div>
       </nav>
@@ -25,7 +26,7 @@ export default function Home() {
         <section className="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 items-center">
           <div className="text-left">
             <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
-              Live MRT-6 Updates
+              Your personal MRT-6 companion
             </span>
             <h1 className="mt-6 text-5xl md:text-7xl font-extrabold text-slate-900 leading-[1.1]">
               Navigate Dhaka <br />
@@ -34,7 +35,7 @@ export default function Home() {
               </span>
             </h1>
             <p className="mt-8 text-lg text-slate-600 leading-relaxed max-w-lg">
-              The only companion app you need for the Dhaka Metro. Quick QR ticketing, AI station guides, and live train tracking in one place.
+              Providing you with quick QR ticketing, intelligent AI guides and live crowed tracking, all in one place.
             </p>
             <div className="mt-10 flex items-center gap-4">
               <Link to="/register" className="bg-slate-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-800 transition-all flex items-center gap-2 group">
