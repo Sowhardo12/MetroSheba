@@ -26,7 +26,9 @@ const dhakaLandmarks = [
   { name: "Khamarbari", station: "Farmgate", desc: "The agricultural hub is right next to the Farmgate station." },
   { name: "National Library", station: "Agargaon", desc: "Located within the Agargaon administrative area, a short distance from the station." },
   { name: "Mirpur 11 Kitchen Market", station: "Mirpur 11", desc: "A major local market hub situated right underneath the metro line." },
-  { name: "Baitul Mukarram", station: "Motijheel", desc: "The national mosque is a short walk or rickshaw ride from the Motijheel terminal." }
+  { name: "Baitul Mukarram", station: "Motijheel", desc: "The national mosque is a short walk or rickshaw ride from the Motijheel terminal." },
+  { name: "BRAC University", station: "Karwan Bazar", desc: "Get off from Karwan Bazar station, take shared CNG or Chakrakar BUS from hatirjhil and its a 20 mins path to BRAC University in merul badda" },
+  { name: "Priyanka Runway City", station: "Uttara Center", desc: "10 mins rickshaw ride from Uttara center station" }
 ];
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));

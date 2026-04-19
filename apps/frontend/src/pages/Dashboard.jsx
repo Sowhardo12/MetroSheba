@@ -60,7 +60,8 @@ const Dashboard = () => {
       console.error("Logout failed:", err);
     } finally {
       localStorage.clear();
-      window.location.href = '/login'; 
+      // window.location.href = '/login'; 
+      navigate('/login');
     }
   };
 
