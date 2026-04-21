@@ -1,4 +1,9 @@
-Currently done: functions
+next_to_implement:
+1. API rate limiter for all requests and LLM API call
+2. optimizing pgvector query and other database query
+3. test KUBERNATES on local Machine with scale up and scale down of contianers using API tester tools 
+
+Currently done features:
 1. users can sign up and login
 2. users can top-up balance from bank account (mock bank table)
 3. users can buy one time valid ticket (will have 1h validity)
@@ -20,14 +25,8 @@ security:
 4. users can't punch in and out in same station
 5. users can't use two emails (to be updated)
 
-issues in prod: 
-1. when refresh shows error message everything else works fine
-2. 
 
-to implement:
-1. update the fonts and logos and writings 
-2. focus on the RAG pipeline and make it better at response
-3. try to add dark mode feature [for later]
+
 
 
 
