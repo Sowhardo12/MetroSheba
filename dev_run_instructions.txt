@@ -9,3 +9,7 @@ entering DB: $ docker exec -it metrosheba_db psql -U user -d metrosheba
 test api: $ npx autocannon -c 200 -d 20 http://localhost:5000/api/health
 where 200 is number of connections
 and 20 is time window
+
+
+to change status of map:
+http://localhost:5173/internal-system/dhaka-mrt-override-panel-6 visit here and commit
