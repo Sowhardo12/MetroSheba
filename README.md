@@ -32,3 +32,96 @@ security:
 
 
 
+
+```
+test_metro
+├─ apps
+│  ├─ backend
+│  │  ├─ package-lock.json
+│  │  ├─ package.json
+│  │  └─ src
+│  │     ├─ app.js
+│  │     ├─ config
+│  │     ├─ controllers
+│  │     │  ├─ aiController.js
+│  │     │  ├─ authController.js
+│  │     │  ├─ gateController.js
+│  │     │  ├─ paymentController.js
+│  │     │  ├─ stationController.js
+│  │     │  └─ ticketController.js
+│  │     ├─ data
+│  │     │  └─ fare.js
+│  │     ├─ index.js
+│  │     ├─ middleware
+│  │     │  └─ authMiddleware.js
+│  │     ├─ models
+│  │     ├─ routes
+│  │     │  ├─ aiRoutes.js
+│  │     │  ├─ authRoutes.js
+│  │     │  ├─ lostFoundRoutes.js
+│  │     │  ├─ paymentRoutes.js
+│  │     │  ├─ stationRoutes.js
+│  │     │  └─ ticketRoutes.js
+│  │     ├─ services
+│  │     │  └─ aiService.js
+│  │     ├─ tests
+│  │     │  ├─ fare.test.js
+│  │     │  └─ gateController.test.js
+│  │     └─ utils
+│  │        ├─ seedKnowledge.js
+│  │        └─ simulation.js
+│  └─ frontend
+│     ├─ eslint.config.js
+│     ├─ index.html
+│     ├─ package-lock.json
+│     ├─ package.json
+│     ├─ playwright-report
+│     │  └─ index.html
+│     ├─ playwright.config.js
+│     ├─ public
+│     │  ├─ favicon.svg
+│     │  ├─ icons.svg
+│     │  └─ metro_rail.jpg
+│     ├─ README.md
+│     ├─ src
+│     │  ├─ api
+│     │  │  └─ metroApi.js
+│     │  ├─ App.css
+│     │  ├─ App.jsx
+│     │  ├─ assets
+│     │  │  ├─ hero.png
+│     │  │  ├─ react.svg
+│     │  │  └─ vite.svg
+│     │  ├─ components
+│     │  │  ├─ ChatBot.jsx
+│     │  │  ├─ Footer.jsx
+│     │  │  ├─ MetroMap.jsx
+│     │  │  └─ TicketModel.jsx
+│     │  ├─ index.css
+│     │  ├─ main.jsx
+│     │  └─ pages
+│     │     ├─ BuyTicket.jsx
+│     │     ├─ Dashboard.jsx
+│     │     ├─ Home.jsx
+│     │     ├─ Login.jsx
+│     │     ├─ LostFound.jsx
+│     │     ├─ Register.jsx
+│     │     ├─ StationGate.jsx
+│     │     └─ TopUp.jsx
+│     ├─ test-results
+│     │  └─ .last-run.json
+│     ├─ tests
+│     │  ├─ example.spec.js
+│     │  ├─ register.spec.js
+│     │  └─ test1.spec.js
+│     └─ vite.config.js
+├─ dev_run_instructions.txt
+├─ docker
+│  └─ db_init
+│     └─ init.sql
+├─ docker-compose.yml
+├─ playwright_instructions.txt
+├─ README.md
+└─ run.sh
+
+```

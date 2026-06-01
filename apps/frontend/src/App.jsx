@@ -41,6 +41,7 @@ function App() {
         <ProtectedRoute>
           <div className="h-screen w-full relative">
             <MetroMap stations={stations} />
+            {/* have to make the changes just here*/}
             <button 
               onClick={() => window.history.back()} 
               className="absolute top-4 right-4 z-[1001] bg-white px-4 py-2 rounded-lg font-bold shadow-md"
