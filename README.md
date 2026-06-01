@@ -22,21 +22,6 @@ Neon PostgreSQL (AWS ap-southeast-1)
 
 ---
 
-# System Architecture Overview and Data flow
-
-[ Vercel Edge Frontend Cluster ]
-                 │                      ▲
-          (HTTP / REST API)      (Server-Sent Events)
-                 ▼                      │
-         [ Node.js/Express Core Backend on Render ]
-           │             │                    │
-           ▼             ▼                    ▼
-   [ pgvector Engine ] [ SQL Tables ]  [ Grok LLM Engine ]
-   └─────────────────────┬────────────┘
-                         ▼
-            [ Neon PostgreSQL Cluster ]
-
-
 # Core Objectives
 
 Metro Sheba provides:
