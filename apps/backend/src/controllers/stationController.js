@@ -2,24 +2,6 @@ const { Pool } = require('pg');
 const { getMockStatus } = require('../utils/simulation');
 const fareMatrix = require('../data/fare');
 
-let sharedStations = [
-  { id: '1', name: 'Uttara North', gridX: 80, gridY: 150, status: 'normal', notice: '' },
-  { id: '2', name: 'Uttara Center', gridX: 230, gridY: 150, status: 'normal', notice: '' },
-  { id: '3', name: 'Uttara South', gridX: 380, gridY: 150, status: 'normal', notice: '' },
-  { id: '4', name: 'Pallabi', gridX: 530, gridY: 150, status: 'normal', notice: '' },
-  { id: '5', name: 'Mirpur 11', gridX: 680, gridY: 150, status: 'normal', notice: '' },
-  { id: '6', name: 'Mirpur 10', gridX: 830, gridY: 150, status: 'normal', notice: '' },
-  { id: '7', name: 'Kazipara', gridX: 980, gridY: 150, status: 'normal', notice: '' },
-  { id: '8', name: 'Shewrapara', gridX: 1130, gridY: 150, status: 'normal', notice: '' },
-  { id: '9', name: 'Agargaon', gridX: 1280, gridY: 150, status: 'normal', notice: '' },
-  { id: '10', name: 'Bijoy Sarani', gridX: 1430, gridY: 150, status: 'normal', notice: '' },
-  { id: '11', name: 'Farmgate', gridX: 1580, gridY: 150, status: 'normal', notice: '' },
-  { id: '12', name: 'Karwan Bazar', gridX: 1730, gridY: 150, status: 'normal', notice: '' },
-  { id: '13', name: 'Shahbagh', gridX: 1880, gridY: 150, status: 'normal', notice: '' },
-  { id: '14', name: 'Dhaka University', gridX: 2030, gridY: 150, status: 'normal', notice: '' },
-  { id: '15', name: 'Secretariat', gridX: 2180, gridY: 150, status: 'normal', notice: '' },
-  { id: '16', name: 'Motijheel', gridX: 2330, gridY: 150, status: 'normal', notice: '' },
-];
 let openConnections = [];
 
 
@@ -60,35 +42,53 @@ const calculateFare = (req, res) => {
 };
 
 
-const streamUpdates = (req, res) => {
+// 1. Establish live stream event emitter
+const streamUpdates = async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Prevent CORS blocks
+  res.setHeader('Access-Control-Allow-Origin', '*');
 
-  // Send current data immediately on connection
-  res.write(`data: ${JSON.stringify(sharedStations)}\n\n`);
-  openConnections.push(res);
+  try {
+    // Grab latest saved station statuses from your Neon DB
+    const result = await pool.query('SELECT id, name, grid_x AS "gridX", grid_y AS "gridY", status, notice FROM metro_stations ORDER BY CAST(id AS INTEGER) ASC');
+    
+    // Immediately send current database conditions to the new listener
+    res.write(`data: ${JSON.stringify(result.rows)}\n\n`);
+    openConnections.push(res);
+  } catch (error) {
+    console.error("Database streaming read failure:", error);
+  }
 
   req.on('close', () => {
     openConnections = openConnections.filter(client => client !== res);
   });
 };
 
-// Receive updates from dev panel and broadcast to all users
-const updateStationStatus = (req, res) => {
+// 2. Admin secret modification processor
+const updateStationStatus = async (req, res) => {
   const { id, status, notice } = req.body;
 
-  sharedStations = sharedStations.map(station => 
-    station.id === id ? { ...station, status, notice } : station
-  );
+  try {
+    // Persist changes into Postgres
+    await pool.query(
+      'UPDATE metro_stations SET status = $1, notice = $2 WHERE id = $3',
+      [status, notice, id]
+    );
 
-  // Send the updated data to EVERYONE connected
-  openConnections.forEach(client => {
-    client.write(`data: ${JSON.stringify(sharedStations)}\n\n`);
-  });
+    // Fetch the entire fresh table configuration to broadcast
+    const updatedResult = await pool.query('SELECT id, name, grid_x AS "gridX", grid_y AS "gridY", status, notice FROM metro_stations ORDER BY CAST(id AS INTEGER) ASC');
 
-  res.status(200).json({ success: true });
+    // Broadcast the synchronized updates down the streaming tubes to every commuter
+    openConnections.forEach(client => {
+      client.write(`data: ${JSON.stringify(updatedResult.rows)}\n\n`);
+    });
+
+    return res.status(200).json({ success: true, message: 'Broadcast complete' });
+  } catch (error) {
+    console.error("Database status injection failure:", error);
+    return res.status(500).json({ success: false, error: 'Internal Database Error' });
+  }
 };
 
 

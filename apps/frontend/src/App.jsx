@@ -12,6 +12,7 @@ import TopUp from './pages/TopUp';
 import { useLocation } from 'react-router-dom';
 import Footer from './components/Footer';
 import StationGate from './pages/StationGate'
+import SecretMetroControl from './pages/SecretMetroControl';
 
 function App() {
   const [stations, setStations] = useState([]);
@@ -37,6 +38,7 @@ function App() {
       <Route path="/buy-ticket" element={<ProtectedRoute><BuyTicket /></ProtectedRoute>} />
       <Route path="/lost-found" element={<ProtectedRoute><LostFound /></ProtectedRoute>} />
       <Route path="/station" element={<ProtectedRoute><StationGate /></ProtectedRoute>} />
+      <Route path="/internal-system/dhaka-mrt-override-panel-6" element={<SecretMetroControl />}/>
       <Route path="/map" element={
         <ProtectedRoute>
           <div className="h-screen w-full relative">
