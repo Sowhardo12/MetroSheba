@@ -1,127 +1,542 @@
-next_to_implement:
-1. API rate limiter for all requests and LLM API call
-2. optimizing pgvector query and other database query
-3. test KUBERNATES on local Machine with scale up and scale down of contianers using API tester tools 
+# 🚇 Metro Sheba
 
-Currently done features:
-1. users can sign up and login
-2. users can top-up balance from bank account (mock bank table)
-3. users can buy one time valid ticket (will have 1h validity)
-4. Ticket validity will be changed during time.
-4.5. Upon buying ticket, QR code will be generated, which will be downloadable (PDF copy)
-5. Gate Punch system: users can punch in and out during the 1h window 
-6. users can ask for suggestions to AI chatbot
-7. users can see map too see crowed status (to be updated further)
-8. users will be penalized balance if they do not follow the ticket policy
+> A Real-Time Transit Operations & Passenger Management Platform inspired by the Dhaka Mass Rapid Transit (MRT) Line-6 ecosystem.
+
+Metro Sheba is a full-stack transit management system designed to simulate and manage core metro rail operations including ticketing, station monitoring, fare enforcement, passenger services, lost-and-found workflows, and AI-powered landmark assistance.
+
+---
+
+# Live Deployment
+
+### Frontend (Vercel)
+
+https://metro-sheba.vercel.app/
+
+### Backend API (Render)
+
+https://metrosheba-service.onrender.com
+
+### Database
+
+Neon PostgreSQL (AWS ap-southeast-1)
+
+---
+
+# System Architecture Overview and Data flow
+
+[ Vercel Edge Frontend Cluster ]
+                 │                      ▲
+          (HTTP / REST API)      (Server-Sent Events)
+                 ▼                      │
+         [ Node.js/Express Core Backend on Render ]
+           │             │                    │
+           ▼             ▼                    ▼
+   [ pgvector Engine ] [ SQL Tables ]  [ Grok LLM Engine ]
+   └─────────────────────┬────────────┘
+                         ▼
+            [ Neon PostgreSQL Cluster ]
 
 
-security and AI;
-AI:  userMessage -> RAG pipeline (landmark based from vector databse) -> LLM  -> response
+# Core Objectives
 
-security: 
-1. accessToken and RefreshToken are used for seamlessness and security
-2. XSS & CSRF proof (used httpOnly cookies)\
-3. users can't buy ticket with insufficiant balance
-4. users can't punch in and out in same station
-5. users can't use two emails (to be updated)
+Metro Sheba provides:
 
+* Passenger Authentication
+* Digital Wallet Management
+* Smart Ticket Purchasing
+* QR-Based Ticket Validation
+* Gate State-Machine Simulation
+* Journey History Tracking
+* Lost & Found Management
+* Real-Time Station Crowd Monitoring
+* Landmark AI Assistant (RAG Architecture)
+* Transit Operations Dashboard
 
+---
 
+# Technology Stack
 
+## Frontend
 
+* React
+* Vite
+* Axios
+* EventSource (SSE)
+* QR Visualization Components
 
+## Backend
 
+* Node.js
+* Express.js
+* JWT Authentication
+* PostgreSQL
+* pgvector
+* PDF Generation Services
 
+## Infrastructure
 
+* Vercel
+* Render
+* Neon PostgreSQL
+
+---
+
+#  Database Schema
+
+## Enable Extensions
+
+Execute the following relational blueprints inside your Neon SQL console to provision the core application state management dependencies:
+
+```sql
+-- Enable Vector Extensions for Landmark Semantics
+CREATE EXTENSION IF NOT EXISTS pgvector;
+
+-- 1. Core Users Table
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    balance DECIMAL(10, 2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Transit Live Stations State Table
+CREATE TABLE metro_stations (
+    id VARCHAR(10) PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    grid_x INTEGER NOT NULL,
+    grid_y INTEGER NOT NULL,
+    status VARCHAR(20) DEFAULT 'normal',
+    notice TEXT DEFAULT ''
+);
+
+-- 3. Cryptographic Ticketing & Lifecycle Ledger
+CREATE TABLE tickets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id INTEGER REFERENCES users(id),
+    source_station VARCHAR(50) NOT NULL,
+    destination_station VARCHAR(50) NOT NULL,
+    fare_paid DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(20) DEFAULT 'valid', -- 'valid', 'used', 'expired'
+    purchased_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL
+);
+
+-- 4. Lost & Found Relational Core
+CREATE TABLE lost_found (
+    id SERIAL PRIMARY KEY,
+    item_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    reported_type VARCHAR(10) NOT NULL, -- 'lost' or 'found'
+    station_id VARCHAR(10) REFERENCES metro_stations(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 5. RAG Vector Knowledge Base for Landmarks
+CREATE TABLE landmark_knowledge (
+    id SERIAL PRIMARY KEY,
+    landmark_name VARCHAR(100) NOT NULL,
+    associated_station VARCHAR(50) NOT NULL,
+    context_chunk TEXT NOT NULL,
+    embedding VECTOR(1536) -- Match dimension output of chosen embedding model
+);
+
+--6 Metro Station Table for Map Updates
+CREATE TABLE IF NOT EXISTS metro_stations (
+    id VARCHAR(10) PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    grid_x INTEGER NOT NULL,
+    grid_y INTEGER NOT NULL,
+    status VARCHAR(20) DEFAULT 'normal',
+    notice TEXT DEFAULT ''
+);
+
+--seeding the data
+INSERT INTO metro_stations (id, name, grid_x, grid_y, status, notice) VALUES
+('1', 'Uttara North', 80, 150, 'normal', ''),
+('2', 'Uttara Center', 230, 150, 'normal', ''),
+('3', 'Uttara South', 380, 150, 'normal', ''),
+('4', 'Pallabi', 530, 150, 'normal', ''),
+('5', 'Mirpur 11', 680, 150, 'normal', ''),
+('6', 'Mirpur 10', 830, 150, 'normal', ''),
+('7', 'Kazipara', 980, 150, 'normal', ''),
+('8', 'Shewrapara', 1130, 150, 'normal', ''),
+('9', 'Agargaon', 1280, 150, 'normal', ''),
+('10', 'Bijoy Sarani', 1430, 150, 'normal', ''),
+('11', 'Farmgate', 1580, 150, 'normal', ''),
+('12', 'Karwan Bazar', 1730, 150, 'normal', ''),
+('13', 'Shahbagh', 1880, 150, 'normal', ''),
+('14', 'Dhaka University', 2030, 150, 'normal', ''),
+('15', 'Secretariat', 2180, 150, 'normal', ''),
+('16', 'Motijheel', 2330, 150, 'normal', '')
+ON CONFLICT (id) DO NOTHING;
+
+---
+
+#  User Lifecycle
+
+## Registration
+
+1. User submits email and password.
+2. Password is hashed before storage in database.
+3. Account is created.
+4. Wallet initialized with default balance.
+
+## Login
+
+1. Credentials validated.
+2. JWT Access Token issued.
+3. Refresh Token stored securely.
+4. Session established.
+
+## Wallet Top-Up
+
+1. User initiates simulated payment.
+2. Transaction recorded (ACID).
+3. Wallet balance updated.
+4. Dashboard refreshed.
+
+---
+
+#  Ticketing System
+
+## Purchase Flow
+
+```text
+User
+ ↓
+Select Source
+ ↓
+Select Destination
+ ↓
+Fare Calculation
+ ↓
+Balance Validation
+ ↓
+Ticket Creation
+ ↓
+QR Generation
+ ↓
+PDF Download
 ```
-test_metro
-├─ apps
-│  ├─ backend
-│  │  ├─ package-lock.json
-│  │  ├─ package.json
-│  │  └─ src
-│  │     ├─ app.js
-│  │     ├─ config
-│  │     ├─ controllers
-│  │     │  ├─ aiController.js
-│  │     │  ├─ authController.js
-│  │     │  ├─ gateController.js
-│  │     │  ├─ paymentController.js
-│  │     │  ├─ stationController.js
-│  │     │  └─ ticketController.js
-│  │     ├─ data
-│  │     │  └─ fare.js
-│  │     ├─ index.js
-│  │     ├─ middleware
-│  │     │  └─ authMiddleware.js
-│  │     ├─ models
-│  │     ├─ routes
-│  │     │  ├─ aiRoutes.js
-│  │     │  ├─ authRoutes.js
-│  │     │  ├─ lostFoundRoutes.js
-│  │     │  ├─ paymentRoutes.js
-│  │     │  ├─ stationRoutes.js
-│  │     │  └─ ticketRoutes.js
-│  │     ├─ services
-│  │     │  └─ aiService.js
-│  │     ├─ tests
-│  │     │  ├─ fare.test.js
-│  │     │  └─ gateController.test.js
-│  │     └─ utils
-│  │        ├─ seedKnowledge.js
-│  │        └─ simulation.js
-│  └─ frontend
-│     ├─ eslint.config.js
-│     ├─ index.html
-│     ├─ package-lock.json
-│     ├─ package.json
-│     ├─ playwright-report
-│     │  └─ index.html
-│     ├─ playwright.config.js
-│     ├─ public
-│     │  ├─ favicon.svg
-│     │  ├─ icons.svg
-│     │  └─ metro_rail.jpg
-│     ├─ README.md
-│     ├─ src
-│     │  ├─ api
-│     │  │  └─ metroApi.js
-│     │  ├─ App.css
-│     │  ├─ App.jsx
-│     │  ├─ assets
-│     │  │  ├─ hero.png
-│     │  │  ├─ react.svg
-│     │  │  └─ vite.svg
-│     │  ├─ components
-│     │  │  ├─ ChatBot.jsx
-│     │  │  ├─ Footer.jsx
-│     │  │  ├─ MetroMap.jsx
-│     │  │  └─ TicketModel.jsx
-│     │  ├─ index.css
-│     │  ├─ main.jsx
-│     │  └─ pages
-│     │     ├─ BuyTicket.jsx
-│     │     ├─ Dashboard.jsx
-│     │     ├─ Home.jsx
-│     │     ├─ Login.jsx
-│     │     ├─ LostFound.jsx
-│     │     ├─ Register.jsx
-│     │     ├─ StationGate.jsx
-│     │     └─ TopUp.jsx
-│     ├─ test-results
-│     │  └─ .last-run.json
-│     ├─ tests
-│     │  ├─ example.spec.js
-│     │  ├─ register.spec.js
-│     │  └─ test1.spec.js
-│     └─ vite.config.js
-├─ dev_run_instructions.txt
-├─ docker
-│  └─ db_init
-│     └─ init.sql
-├─ docker-compose.yml
-├─ playwright_instructions.txt
-├─ README.md
-└─ run.sh
 
+### Validation Rule
+
+```text
+wallet_balance >= calculated_fare
 ```
+
+### Ticket Characteristics
+
+* Unique UUID
+* One-hour validity window
+* Downloadable PDF
+* Embedded QR matrix
+* Journey metadata
+
+---
+
+#  Gate Punch State Machine
+
+Metro Sheba simulates entry and exit gates using fare matrices loaded from:
+
+```text
+apps/backend/src/data/fare.js
+```
+
+### Fare Lookup
+
+```javascript
+fare[source][destination]
+```
+
+---
+
+## Entry Validation
+
+```text
+Ticket Status = VALID
+        ↓
+Allow Entry
+        ↓
+Mark Journey Active
+```
+
+Invalid tickets are rejected immediately.
+
+---
+
+## Exit Validation
+
+```text
+Entered Station
+        ↓
+Destination Match?
+        ↓
+YES → Complete Journey
+NO  → Apply Penalty
+```
+
+### Penalty Enforcement
+
+Incorrect terminal exits:
+
+* Fine passenger
+* Deduct balance from original amount automatically
+* Log violation event (to be implemented)
+
+---
+
+#  Journey History
+
+Ticket lifecycle:
+
+```text
+VALID - up for use
+  ↓
+USED  - travel done
+  ↓
+EXPIRED  - bought but never used
+```
+
+Historical records remain queryable for analytics and passenger review.
+
+---
+
+# Lost & Found System
+
+Features:
+
+* Report Lost Item
+* Reporting Found item and Search by catagory will be implemented
+
+---
+
+# 🗺 Real-Time Metro Map
+
+Metro Sheba streams station crowd density information using Server-Sent Events.
+
+### SSE Endpoint
+
+```http
+GET /api/stations/live-stream
+```
+
+### EventSource Integration
+
+```javascript
+const source = new EventSource(
+  "/api/stations/live-stream"
+);
+```
+
+Benefits:
+
+* No manual refresh required
+* Low-overhead updates
+* Continuous station monitoring
+* Dynamic crowd visualization
+
+---
+
+# Landmark AI Assistant (RAG)
+
+Metro Sheba includes a Retrieval-Augmented Generation pipeline.
+
+## Processing Flow
+
+```text
+User Query
+    ↓
+Text Embedding
+    ↓
+pgvector Similarity Search
+    ↓
+Top 3 Context Chunks
+    ↓
+Prompt Augmentation
+    ↓
+Grok API
+    ↓
+Final Response
+```
+
+### Similarity Query
+
+```sql
+SELECT *
+FROM landmark_knowledge
+ORDER BY embedding <=> $1
+LIMIT 3;
+```
+
+### Capabilities
+
+* Landmark discovery
+* Transit guidance
+* Nearby attraction lookup
+* Context-aware responses
+
+---
+
+#  Security Architecture
+
+## Access Tokens
+
+```text
+Authorization: Bearer <token>
+```
+
+Stored client-side for API authorization.
+
+---
+
+## Refresh Tokens
+
+Stored using:
+
+```text
+HttpOnly
+Secure
+SameSite
+```
+
+Benefits:
+
+* XSS Protection
+* CSRF Mitigation
+* Session Isolation
+
+---
+
+#  Business Rule Enforcement
+
+Metro Sheba prevents:
+
+### Insufficient Balance Purchases
+
+```text
+Balance < Fare
+```
+
+Result:
+
+```text
+Ticket Purchase Rejected
+```
+
+---
+
+### Double Punch Prevention
+
+```text
+Same Station
++
+Sequential Scan
+```
+
+Result:
+
+```text
+Action Blocked
+```
+
+---
+
+#  Advanced Routing Strategy
+
+## Problem
+
+Deep routes such as:
+
+```text
+/internal-system/dhaka-mrt-override-panel-6
+```
+
+may generate 404 errors on Vercel refresh operations.
+
+---
+
+## Solution
+
+A secure query-parameter routing bypass was implemented.
+
+### Access Pattern
+
+```text
+https://metro-sheba.vercel.app/?access=dhaka-mrt-override-panel-6
+```
+
+Benefits:
+
+* Eliminates refresh-related route failures
+* Preserves access control workflows
+* Simplifies deployment behavior
+
+---
+
+# Environment Configuration
+
+```env
+PORT=5000
+
+DATABASE_URL=postgresql://<neon-connection>
+
+JWT_SECRET=your_jwt_secret
+
+JWT_REFRESH_SECRET=your_refresh_secret
+
+GROK_API_KEY=your_grok_key
+
+CLIENT_URL=https://metro-sheba.vercel.app
+```
+
+---
+
+# Local Development
+
+## Backend
+
+```bash
+cd apps/backend
+
+npm install
+
+npm run dev
+```
+
+---
+
+## Frontend
+
+```bash
+cd apps/frontend
+
+npm install
+
+npm run dev
+```
+
+---
+
+# Future Enhancements
+
+* Smart Fare Optimization
+* Passenger Demand Forecasting
+* Route Congestion Prediction
+* Multi-Line Network Support
+* NFC Smart Card Integration
+* Admin Analytics Dashboard
+* Operational Incident Management
+
+---
+
+#  License
+
+This project was developed for educational, academic, and transit-simulation purposes.
+
+---
+
+## Metro Sheba
+
+**Building a smarter, safer, and more intelligent urban transit experience through real-time operations, secure ticketing, and AI-powered passenger assistance.**
