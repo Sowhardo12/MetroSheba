@@ -30,11 +30,11 @@ jobs:
     # FIX 2: Changed 'cd backend' to 'cd backend/src' so npm can find your packages
     - name: Install Dependencies
       run: |
-        cd backend/src
+        cd apps/backend
         npm ci
 
     # FIX 3: Changed 'cd backend' to 'cd backend/src' to run your Jest tests
     - name: Run Jest Test Suites
       run: |
-        cd backend/src
+        cd apps/backend
         npm test
