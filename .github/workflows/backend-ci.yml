@@ -23,6 +23,8 @@ jobs:
       run: |
         echo "DATABASE_URL=postgres://fake_user:fake_pass@localhost:5432/fake_db" >> $GITHUB_ENV
         echo "NODE_ENV=test" >> $GITHUB_ENV
+        echo "GROQ_API_KEY=mock_groq_api_key_for_testing" >> $GITHUB_ENV
+        echo "GEMINI_API_KEY=mock_gemini_api_key_for_testing" >> $GITHUB_ENV
 
     - name: Install Dependencies
       run: |
