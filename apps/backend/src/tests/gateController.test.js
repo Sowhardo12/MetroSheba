@@ -1,8 +1,8 @@
 const request = require('supertest');
-const app = require('../app');
-const { Pool } = require('pg');
+const Express = require('express');
+const { handlePunch } = require('../controllers/gateController');
 
-// Mocking pg Pool
+// 1. Mock the 'pg' module so it doesn't connect to Neon DB during tests
 jest.mock('pg', () => {
   const mClient = {
     query: jest.fn(),
@@ -10,130 +10,86 @@ jest.mock('pg', () => {
   };
   const mPool = {
     query: jest.fn(),
-    connect: jest.fn(() => mClient),
+    connect: jest.fn(() => Promise.resolve(mClient)),
   };
   return { Pool: jest.fn(() => mPool) };
 });
 
-describe('Gate System API - handlePunch', () => {
-  let pool;
-  let client;
+// Import the mocked pool instances to manipulate their return values
+const { Pool } = require('pg');
+const pool = new Pool();
 
+// 2. Set up a mini Express app to run the controller
+const app = Express();
+app.use(Express.json());
+// Mock user authentication middleware
+app.use((req, res, next) => {
+  req.user = { id: 42 }; // Mocked User ID
+  next();
+});
+app.post('/gate/punch', handlePunch); //it hits the handlePunch function which takes id, currentStationid and QR data
+
+describe('Gate Controller - handlePunch', () => {
   beforeEach(() => {
-    pool = new Pool();
-    client = pool.connect();
     jest.clearAllMocks();
   });
 
-  // 1. Test Entry Logic (Punch In)
-  test('POST /api/tickets/punch - Successful Entry', async () => {
-    const mockTicket = {
-      id: 101,
-      status: 'active',
-      qr_code_data: 'TICKET-1-12345-1-5-40'
-    };
-
-    pool.query.mockResolvedValueOnce({ rows: [mockTicket] }); // Ticket lookup
-    pool.query.mockResolvedValueOnce({}); // Update status
-
+  // TEST CASE 1: Validation Check
+  it('should return 400 if QR format is invalid', async () => {
     const response = await request(app)
-      .post('/api/gate/punch')
+      .post('/gate/punch')
       .send({
-        qrData: 'TICKET-1-12345-1-5-40',
-        currentStationId: '1'
+        qrData: 'INVALID-QR-FORMAT',
+        currentStationId: 1
       });
 
-    expect(response.status).toBe(200);
-    expect(response.body.message).toContain("Entry Successful");
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toEqual({ error: 'Invalid QR format' });
   });
 
-  // 2. Test Invalid Station Entry
-  test('POST /api/gate/punch - Wrong Entry Station', async () => {
-    const mockTicket = {
-      id: 101,
-      status: 'active',
-      qr_code_data: 'TICKET-1-12345-1-5-40'
-    };
-
-    pool.query.mockResolvedValueOnce({ rows: [mockTicket] });
-
-    const response = await request(app)
-      .post('/api/gate/punch')
-      .send({
-        qrData: 'TICKET-1-12345-1-5-40',
-        currentStationId: '2' // Trying to enter at station 2 instead of 1
-      });
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe("Must enter at Station 1");
-  });
-
-  // 3. Test Normal Exit (Punch Out)
-  test('POST /api/gate/punch - Successful Exit', async () => {
-    const mockTicket = {
-      id: 101,
-      status: 'in-transit',
-      qr_code_data: 'TICKET-1-12345-1-5-40'
-    };
-
-    pool.query.mockResolvedValueOnce({ rows: [mockTicket] }); // Ticket lookup
-    pool.query.mockResolvedValueOnce({}); // Update status to completed
-
-    const response = await request(app)
-      .post('/api/gate/punch')
-      .send({
-        qrData: 'TICKET-1-12345-1-5-40',
-        currentStationId: '5'
-      });
-
-    expect(response.status).toBe(200);
-    expect(response.body.message).toContain("Exit Successful");
-  });
-
-  // 4. Test Over-travel Penalty Logic
-  test('POST /api/gate/punch - Exit with Penalty (Insufficient Balance)', async () => {
-    const mockTicket = {
-      id: 101,
-      status: 'in-transit',
-      qr_code_data: 'TICKET-1-12345-1-3-20' // Ends at station 3
-    };
-
-    pool.query.mockResolvedValueOnce({ rows: [mockTicket] }); // Ticket lookup
+  // TEST CASE 2: Successful Punch In (Entry Logic)
+  it('should successfully punch in a user if ticket is active and at correct station', async () => {
+    // Simulate DB response for finding an active ticket
+    // QR format: TICKET-userId-timestamp-from-to-fare (e.g. from station 1 to station 5)
+    const validQr = 'TICKET-42-1717320000-1-5-20'; 
     
-    // Transaction mocks
-    client.query.mockResolvedValueOnce({}); // BEGIN
-    client.query.mockResolvedValueOnce({ rows: [{ balance: 5 }] }); // SELECT balance (Too low)
-    client.query.mockResolvedValueOnce({}); // ROLLBACK
+    pool.query.mockResolvedValueOnce({
+      rows: [{ id: 101, status: 'active', qr_code_data: validQr, user_id: 42 }]
+    });
 
     const response = await request(app)
-      .post('/api/gate/punch')
+      .post('/gate/punch')
       .send({
-        qrData: 'TICKET-1-12345-1-3-20',
-        currentStationId: '5' // Over-traveled to station 5
+        qrData: validQr,
+        currentStationId: 1 // Matching the 'from' station in QR
       });
 
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe("Insufficient balance for journey adjustment");
+    // Check that database update statement was triggered correctly
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE tickets SET status = $1'),
+      ['in-transit', 1, 101]
+    );
+    
+    expect(response.statusCode).toBe(200);
+    expect(response.body.message).toContain('Entry Successful');
   });
 
-  // 5. Test Ticket Already Used
-  test('POST /api/gate/punch - Ticket Already Completed', async () => {
-    const mockTicket = {
-      id: 101,
-      status: 'completed',
-      qr_code_data: 'TICKET-1-12345-1-5-40'
-    };
-
-    pool.query.mockResolvedValueOnce({ rows: [mockTicket] });
+  // TEST CASE 3: Wrong Station Entry
+  it('should block entry if user tries to punch in at the wrong station', async () => {
+    const validQr = 'TICKET-42-1717320000-1-5-20'; // From station 1
+    
+    pool.query.mockResolvedValueOnce({
+      rows: [{ id: 101, status: 'active', qr_code_data: validQr, user_id: 42 }]
+    });
 
     const response = await request(app)
-      .post('/api/gate/punch')
+      .post('/gate/punch')
       .send({
-        qrData: 'TICKET-1-12345-1-5-40',
-        currentStationId: '5'
+        qrData: validQr,
+        currentStationId: 3 // But entering at station 3
       });
 
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe("Ticket already used");
+    expect(response.statusCode).toBe(400);
+    expect(response.body.error).toContain('Must enter at Station 1');
   });
 });

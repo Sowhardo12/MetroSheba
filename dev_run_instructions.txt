@@ -13,3 +13,7 @@ and 20 is time window
 
 to change status of map:
 http://localhost:5173/internal-system/dhaka-mrt-override-panel-6 visit here and commit
+
+FOR project tree:
+powershell go to root dir:
+Get-ChildItem -Recurse | Where-Object { $_.FullName -notmatch '\\(node_modules|\.git)($|\\)' } | ForEach-Object { $depth = ($_.FullName.Replace($PWD.Path, "").Split([System.IO.Path]::DirectorySeparatorChar).Count - 1); $prefix = "  " * $depth; $icon = if ($_.PSIsContainer) { "📁 " } else { "📄 " }; $prefix + $icon + $_.Name } > project-tree.txt

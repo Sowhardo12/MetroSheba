@@ -1,6 +1,6 @@
 const { Pool } = require('pg');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL.includes('neon.tech') || process.env.NODE_ENV === 'production'
+  ssl: process.env.DATABASE_URL?.includes('neon.tech') || process.env.NODE_ENV === 'production'
   ? {rejectUnauthorized: false} : false
  });
 
@@ -62,6 +62,7 @@ const handlePunch = async (req, res) => {
                     const userRes = await client.query('SELECT balance FROM users WHERE id = $1 FOR UPDATE', [userId]);
                     if (userRes.rows[0].balance < penalty) {
                         throw new Error("Insufficient balance for journey adjustment");
+                        //have to write logic for this one 
                     }
                     await client.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [penalty, userId]);
                     await client.query(

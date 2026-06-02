@@ -1,0 +1,45 @@
+name: Backend CI Pipeline
+
+# 1. Trigger the workflow on pushes or pull requests to the main branch
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  run-backend-tests:
+    # Use a clean, isolated virtual Ubuntu environment hosted by GitHub
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Download your code into the virtual machine
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    # Step 2: Install Node.js on the virtual machine
+    - name: Setup Node.js Environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        # Cache npm dependencies inside the backend folder to speed up future runs
+        cache: 'npm'
+        cache-dependency-path: './backend/package-lock.json'
+
+    # Step 3: Set up dummy environment variables so your controllers don't crash
+    - name: Set Environment Variables
+      run: |
+        echo "DATABASE_URL=postgres://fake_user:fake_pass@localhost:5432/fake_db" >> $GITHUB_ENV
+        echo "NODE_ENV=test" >> $GITHUB_ENV
+
+    # Step 4: Step into the backend folder and install packages
+    - name: Install Dependencies
+      run: |
+        cd backend
+        npm ci
+
+    # Step 5: Run your newly written Jest tests!
+    - name: Run Jest Test Suites
+      run: |
+        cd backend
+        npm test
