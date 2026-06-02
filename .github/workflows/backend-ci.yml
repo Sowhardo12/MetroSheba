@@ -20,7 +20,7 @@ jobs:
         node-version: '20'
         cache: 'npm'
         # FIX 1: Pointed to the actual location inside backend/src/
-        cache-dependency-path: './backend/src/package-lock.json'
+        cache-dependency-path: './backend/package-lock.json'
 
     - name: Set Environment Variables
       run: |
