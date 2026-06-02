@@ -18,22 +18,17 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
-        # FIX 1: Pointed to the actual location inside backend/src/
-        cache-dependency-path: '.apps/backend/package-lock.json'
 
     - name: Set Environment Variables
       run: |
         echo "DATABASE_URL=postgres://fake_user:fake_pass@localhost:5432/fake_db" >> $GITHUB_ENV
         echo "NODE_ENV=test" >> $GITHUB_ENV
 
-    # FIX 2: Changed 'cd backend' to 'cd backend/src' so npm can find your packages
     - name: Install Dependencies
       run: |
         cd apps/backend
-        npm ci
+        npm install
 
-    # FIX 3: Changed 'cd backend' to 'cd backend/src' to run your Jest tests
     - name: Run Jest Test Suites
       run: |
         cd apps/backend
