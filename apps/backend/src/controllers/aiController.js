@@ -18,10 +18,20 @@ const redisClient = createClient({
 
 redisClient.on('error', err => console.error('Redis Client Error', err));
 
-(async () => {
-  await redisClient.connect();
-  console.log('Connected to Secure Upstash Redis Cache successfully!');
-})();
+// (async () => {
+//   await redisClient.connect();
+//   console.log('Connected to Secure Upstash Redis Cache successfully!');
+// })();
+if (process.env.NODE_ENV !== 'test') {
+  (async () => {
+    try {
+      await redisClient.connect();
+      console.log('Connected to Secure Upstash Redis Cache successfully!');
+    } catch (err) {
+      console.error('Failed to connect to Redis on boot:', err.message);
+    }
+  })();
+}
 
 
 const handleChat = async (req,res)=>{
