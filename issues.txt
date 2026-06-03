@@ -1,1 +1,3 @@
-https://metro-sheba.vercel.app/internal-system/dhaka-mrt-override-panel-6   not working in production
+https://metro-sheba.vercel.app/internal-system/dhaka-mrt-override-panel-6   not working in production: solved
+now: CI is done, have to complete CD, render and vercel auto deploy, we have to 
+run the deployment thorugh Github actions. 

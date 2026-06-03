@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 const { generateEmbedding, getGroqChatResponse } = require('../services/aiService');
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL.includes('neon.tech') || process.env.NODE_ENV === 'production'
+  ssl: process.env.DATABASE_URL?.includes('neon.tech') || process.env.NODE_ENV === 'production'
   ? {rejectUnauthorized: false} : false
  });
 
@@ -10,6 +10,12 @@ const handleChat = async (req,res)=>{
   const {message} = req.body;
   if(!message){
     return res.status(400).json({error:"Message is required"});
+  }
+  //adding guard rail against huge chunk msg
+  if (message.length > 200) {
+    return res.status(400).json({ 
+      error: "Message too long. Please keep your question under 500 characters." 
+    });
   }
   try{
     const queryVector = await generateEmbedding(message);
