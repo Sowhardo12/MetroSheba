@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 const { generateEmbedding, getGroqChatResponse } = require('../services/aiService');
 const { createClient } = require('redis');
+const isSecure = redisUrl.startsWith('rediss://');
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL?.includes('neon.tech') || process.env.NODE_ENV === 'production'
