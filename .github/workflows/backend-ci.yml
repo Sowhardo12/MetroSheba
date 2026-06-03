@@ -25,6 +25,7 @@ jobs:
         echo "NODE_ENV=test" >> $GITHUB_ENV
         echo "GROQ_API_KEY=mock_groq_api_key_for_testing" >> $GITHUB_ENV
         echo "GEMINI_API_KEY=mock_gemini_api_key_for_testing" >> $GITHUB_ENV
+        echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV  # <--- ADD THIS LINE
 
     - name: Install Dependencies
       run: |
