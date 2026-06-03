@@ -10,9 +10,12 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL,
 const redisClient = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6329',
   socket: {
-    // This tells node-redis to accept the encrypted TLS connection stream safely
-    tls: true,
-    rejectUnauthorized: false // Helps avoid handshake failures across distributed Render networks
+    // // This tells node-redis to accept the encrypted TLS connection stream safely
+    // tls: true,
+    // rejectUnauthorized: false // Helps avoid handshake failures across distributed Render networks
+    ...(isSecure && {
+      tls: true,
+      rejectUnauthorized: false})
   }
 });
 
