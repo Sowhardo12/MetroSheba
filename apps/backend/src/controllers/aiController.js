@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 const { generateEmbedding, getGroqChatResponse } = require('../services/aiService');
 const { createClient } = require('redis');
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6329';
 const isSecure = redisUrl.startsWith('rediss://');
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL,
