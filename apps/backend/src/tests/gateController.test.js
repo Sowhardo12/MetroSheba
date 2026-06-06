@@ -93,3 +93,77 @@ describe('Gate Controller - handlePunch', () => {
     expect(response.body.error).toContain('Must enter at Station 1');
   });
 });
+
+// TEST CASE 4: motijhil to uttora Route - Exiting one station ahead (current < destination)
+  it('should deduct penalty and grant exit on Uttara-Motijhil route when exiting a station ahead', async () => {
+    // Route: Station 10 -> Station 5. Exiting ahead at Station 4.
+    // current (4) != destination (5) AND current (4) < destination (5) -> triggers penalty
+    const validQr = 'TICKET-42-1717320000-10-5-40'; 
+    const currentStation = 4;
+    const extraStops = Math.abs(currentStation - 5); // 1 stop
+    const expectedPenalty = extraStops * 10; // 10 Tk
+
+    // Mock initial ticket search
+    pool.query.mockResolvedValueOnce({
+      rows: [{ id: 101, status: 'in-transit', qr_code_data: validQr, user_id: 42 }]
+    });
+
+    // Get the client mock for the transaction
+    const mClient = await pool.connect();
+    // Mock user balance inquiry inside transaction
+    mClient.query.mockResolvedValueOnce({}) // For 'BEGIN'
+                 .mockResolvedValueOnce({ rows: [{ balance: 100 }] }); // For 'SELECT balance ...'
+
+    const response = await request(app)
+      .post('/gate/punch')
+      .send({
+        qrData: validQr,
+        currentStationId: currentStation
+      });
+
+    // Verify penalty deduction query was made with calculated penalty
+    expect(mClient.query).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE users SET balance = balance - $1'),
+      [expectedPenalty, 42]
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.message).toContain(`Penalty of ৳${expectedPenalty} deducted`);
+  });
+
+  // TEST CASE 5: Uttora to Motijhil Route - Exiting one station ahead (current > destination)
+  it('should deduct penalty and grant exit on Motijhil-Uttara route when exiting a station ahead', async () => {
+    // Route: Station 1 -> Station 5. Exiting ahead at Station 6.
+    // current (6) != destination (5) AND current (6) > destination (5) -> triggers penalty
+    const validQr = 'TICKET-42-1717320000-1-5-20'; 
+    const currentStation = 6;
+    const extraStops = Math.abs(currentStation - 5); // 1 stop
+    const expectedPenalty = extraStops * 10; // 10 Tk
+
+    // Mock initial ticket search
+    pool.query.mockResolvedValueOnce({
+      rows: [{ id: 101, status: 'in-transit', qr_code_data: validQr, user_id: 42 }]
+    });
+
+    // Get the client mock for the transaction
+    const mClient = await pool.connect();
+    // Mock transaction operations
+    mClient.query.mockResolvedValueOnce({}) // For 'BEGIN'
+                 .mockResolvedValueOnce({ rows: [{ balance: 50 }] }); // For 'SELECT balance ...'
+
+    const response = await request(app)
+      .post('/gate/punch')
+      .send({
+        qrData: validQr,
+        currentStationId: currentStation
+      });
+
+    // Verify database update statements executed
+    expect(mClient.query).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE tickets SET status = $1'),
+      ['completed', currentStation, 101]
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.message).toContain(`Penalty of ৳${expectedPenalty} deducted`);
+  });

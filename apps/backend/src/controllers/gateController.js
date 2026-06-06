@@ -28,10 +28,11 @@ const handlePunch = async (req, res) => {
 
         // 2. ENTRY LOGIC (Punch In)
         if (ticket.status === 'active') {
+            //can entry
             if (parseInt(currentStationId) !== parseInt(fromStation)) {
                 return res.status(400).json({ error: `Must enter at Station ${fromStation}` });
             }
-
+            //punched in correct start station
             await pool.query(
                 'UPDATE tickets SET status = $1, entry_station_id = $2 WHERE id = $3',
                 ['in-transit', currentStationId, ticket.id]
@@ -49,10 +50,13 @@ const handlePunch = async (req, res) => {
             if (current === source) return res.status(400).json({ error: "Cannot exit at entry station" });
 
             // Penalty Logic: If current station is beyond destination
-            if (current > destination) {
+
+            //PROBLEM IN PENALTY LOGIC -  motijhil to uttora section has bug 
+            // if (current > destination) {
+            if (current != destination && ( current>destination || current<destination )) {
                 // Here you would normally call your fare calculation function
                 // For simulation, let's assume a flat penalty of 20 per extra station
-                const extraStops = current - destination;
+                const extraStops = Math.abs(current - destination);
                 const penalty = extraStops * 10; 
 
                 // ACID Transaction for Balance Deduction
